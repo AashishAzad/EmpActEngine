@@ -1,0 +1,135 @@
+//plugins {
+//    id 'io.jmix' version '2.7.4'
+//    id 'java'
+//    id 'org.jetbrains.gradle.plugin.idea-ext' version '1.1.9'
+//}
+//
+//apply plugin: 'org.springframework.boot'
+//
+//jmix {
+//    bomVersion = '2.7.4'
+//}
+//
+//group = 'com.tech909'
+//version = '0.0.1-SNAPSHOT'
+//
+//repositories {
+//    mavenCentral()
+//    maven {
+//        url = 'https://global.repo.jmix.io/repository/public'
+//    }
+//}
+//
+//dependencies {
+//    implementation 'io.jmix.core:jmix-core-starter'
+//    implementation 'io.jmix.data:jmix-eclipselink-starter'
+//    implementation 'io.jmix.rest:jmix-rest-starter'
+//    implementation 'io.jmix.security:jmix-security-starter'
+//    implementation 'io.jmix.security:jmix-security-data-starter'
+//    implementation 'io.jmix.localfs:jmix-localfs-starter'
+//    implementation 'io.jmix.authserver:jmix-authserver-starter'
+//
+//    implementation 'org.springframework.boot:spring-boot-starter-web'
+//
+//    runtimeOnly 'org.hsqldb:hsqldb'
+//
+//    testImplementation('org.springframework.boot:spring-boot-starter-test') {
+//        exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+//    }
+//}
+//
+//test {
+//    useJUnitPlatform()
+//}
+//
+//idea {
+//    module {
+//        excludeDirs.addAll(files '.jmix')
+//    }
+//}
+plugins {
+    id 'io.jmix' version '2.7.4'
+    id 'java'
+    id 'org.jetbrains.gradle.plugin.idea-ext' version '1.1.9'
+}
+
+apply plugin: 'org.springframework.boot'
+
+jmix {
+    bomVersion = '2.7.4'
+}
+
+group = 'com.tech909'
+version = '0.0.1-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+    maven {
+        url = 'https://global.repo.jmix.io/repository/public'
+    }
+}
+
+configurations.configureEach {
+    // Exclude Liquibase entirely — we use Hibernate ddl-auto instead
+    exclude group: 'org.liquibase', module: 'liquibase-core'
+}
+
+dependencies {
+
+    // ── Jmix Core (keep what you had) ───────────────────────────────────────
+    implementation 'io.jmix.core:jmix-core-starter'
+//    implementation 'io.jmix.data:jmix-eclipselink-starter'
+//    implementation 'io.jmix.rest:jmix-rest-starter'
+    implementation 'io.jmix.security:jmix-security-starter'
+    implementation 'io.jmix.security:jmix-security-data-starter'
+    implementation 'io.jmix.localfs:jmix-localfs-starter'
+
+    implementation('io.jmix.data:jmix-eclipselink-starter') {
+        exclude group: 'org.eclipse.persistence', module: 'org.eclipse.persistence.jpa'
+    }
+
+    // ── Spring Boot Web + Validation ─────────────────────────────────────────
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+
+    // ── Spring Security (replaces Jmix OAuth2 auth server for our JWT flow) ──
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+
+    // ── WebSocket (STOMP — replaces Socket.IO) ───────────────────────────────
+    implementation 'org.springframework.boot:spring-boot-starter-websocket'
+
+    // ── PostgreSQL (replacing HSQLDB) ────────────────────────────────────────
+    runtimeOnly 'org.postgresql:postgresql'
+
+    // ── JWT (JJWT 0.12.3) ────────────────────────────────────────────────────
+    implementation 'io.jsonwebtoken:jjwt-api:0.12.3'
+    runtimeOnly   'io.jsonwebtoken:jjwt-impl:0.12.3'
+    runtimeOnly   'io.jsonwebtoken:jjwt-jackson:0.12.3'
+
+    // ── Lombok ───────────────────────────────────────────────────────────────
+    compileOnly         'org.projectlombok:lombok:1.18.34'
+    annotationProcessor 'org.projectlombok:lombok:1.18.34'
+
+    // ── Testing ──────────────────────────────────────────────────────────────
+    testImplementation('org.springframework.boot:spring-boot-starter-test') {
+        exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+    }
+    testImplementation 'org.springframework.security:spring-security-test'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+// Required for Lombok annotation processing
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.compilerArgs << '-parameters'
+}
+
+idea {
+    module {
+        excludeDirs.addAll(files '.jmix')
+    }
+}
