@@ -29,6 +29,7 @@ import '../../features/letters/presentation/pages/my_letter_requests_screen.dart
 // Profile imports
 import '../../features/profile/presentation/pages/profile_screen.dart';
 import '../../features/profile/presentation/pages/edit_profile_screen.dart';
+import '../../features/home/presentation/pages/change_password_screen.dart';
 
 // Admin imports
 import '../../features/admin/presentation/pages/generate_notification_screen.dart';
@@ -174,6 +175,11 @@ class AppRouter {
             path: 'edit',
             name: 'edit-profile',
             builder: (context, state) => const EditProfileScreen(),
+          ),
+          GoRoute(
+            path: 'change-password',
+            name: 'change-password',
+            builder: (context, state) => const ChangePasswordScreen(),
           ),
           GoRoute(
             path: 'settings',

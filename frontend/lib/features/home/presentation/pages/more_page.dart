@@ -6,7 +6,6 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
-import 'change_password_screen.dart';
 
 /// More Page
 ///
@@ -128,11 +127,7 @@ class MorePage extends StatelessWidget {
                     _buildMenuItem(
                       'Change Password',
                       Icons.lock_reset,
-                          () => Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => const ChangePasswordScreen(),
-                        ),
-                      ),
+                          () => context.push('/profile/change-password'),
                     ),
                     _buildMenuItem(
                       'Settings',
