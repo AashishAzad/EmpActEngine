@@ -1,5 +1,6 @@
 package com.tech909.empact.service;
 
+import com.tech909.empact.dto.request.ChangePasswordRequest;
 import com.tech909.empact.dto.request.LoginRequest;
 import com.tech909.empact.dto.request.RefreshTokenRequest;
 import com.tech909.empact.dto.response.AuthResponse;
@@ -14,10 +15,12 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -27,6 +30,7 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final JwtTokenProvider tokenProvider;
+    private final PasswordEncoder passwordEncoder;
 
     /**
      * ApplicationContext used to lazily retrieve AuthenticationManager.
@@ -107,6 +111,31 @@ public class AuthService {
     public User getProfile(String userId) {
         return userRepository.findById(UUID.fromString(userId))
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
+    }
+
+    @Transactional
+    public Map<String, String> changePassword(UUID userId, ChangePasswordRequest request) {
+        log.info("Change password attempt for userId: {}", userId);
+
+        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+            throw new BusinessException("New password and confirm password do not match");
+        }
+        if (request.getCurrentPassword().equals(request.getNewPassword())) {
+            throw new BusinessException("New password must be different from current password");
+        }
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
+
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+            throw new BusinessException("Current password is incorrect");
+        }
+
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+
+        log.info("Password changed successfully for: {}", user.getEmployeeId());
+        return Map.of("message", "Password changed successfully");
     }
 
     private AuthResponse buildAuthResponse(User user, String accessToken, String refreshToken) {

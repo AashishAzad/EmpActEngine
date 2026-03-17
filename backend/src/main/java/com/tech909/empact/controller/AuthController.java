@@ -1,5 +1,6 @@
 package com.tech909.empact.controller;
 
+import com.tech909.empact.dto.request.ChangePasswordRequest;
 import com.tech909.empact.dto.request.LoginRequest;
 import com.tech909.empact.dto.request.RefreshTokenRequest;
 import com.tech909.empact.dto.response.AuthResponse;
@@ -63,5 +64,14 @@ public class AuthController {
     @PostMapping("/logout")
     public ResponseEntity<Map<String, String>> logout() {
         return ResponseEntity.ok(Map.of("message", "Logged out successfully"));
+    }
+
+    /** PATCH /auth/change-password — requires valid JWT (any role) */
+    @PatchMapping("/change-password")
+    public ResponseEntity<Map<String, String>> changePassword(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @Valid @RequestBody ChangePasswordRequest request) {
+        UUID userId = UUID.fromString(userDetails.getUsername());
+        return ResponseEntity.ok(authService.changePassword(userId, request));
     }
 }
