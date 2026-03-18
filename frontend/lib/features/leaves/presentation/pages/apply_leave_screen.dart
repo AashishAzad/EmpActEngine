@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -305,10 +306,19 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
                       label: 'Contact Number During Leave',
                       hint: 'Phone number to reach you',
                       keyboardType: TextInputType.phone,
+                      maxLength: 10,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(10),
+                      ],
                       prefixIcon: const Icon(Icons.phone),
                       validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
+                        final contactNumber = value?.trim() ?? '';
+                        if (contactNumber.isEmpty) {
                           return 'Contact number is required';
+                        }
+                        if (contactNumber.length != 10) {
+                          return 'Contact number must be 10 digits';
                         }
                         return null;
                       },
