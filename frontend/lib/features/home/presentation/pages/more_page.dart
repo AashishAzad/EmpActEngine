@@ -27,9 +27,7 @@ class MorePage extends StatelessWidget {
       body: BlocConsumer<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is Unauthenticated) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (context.mounted) context.go('/login');
-            });
+            if (context.mounted) context.go('/login');
           }
         },
         builder: (context, state) {
@@ -46,6 +44,10 @@ class MorePage extends StatelessWidget {
                 ),
               ),
             );
+          }
+
+          if (state is Unauthenticated) {
+            return const SizedBox.shrink();
           }
 
           if (state is Authenticated) {

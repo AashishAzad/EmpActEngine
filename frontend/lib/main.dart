@@ -38,16 +38,19 @@ class MyApp extends StatelessWidget {
       remoteDataSource: authRemoteDataSource,
       storageHelper: storageHelper,
     );
+    final authBloc = AuthBloc(
+      authRepository: authRepository,
+      storageHelper: storageHelper,
+    );
+    final appRouter = AppRouter(
+      authBloc: authBloc,
+      storageHelper: storageHelper,
+    );
 
     return MultiBlocProvider(
       providers: [
         // Auth BLoC
-        BlocProvider(
-          create: (context) => AuthBloc(
-            authRepository: authRepository,
-            storageHelper: storageHelper,
-          ),
-        ),
+        BlocProvider.value(value: authBloc),
         // Add more BLoCs here as you create them
       ],
       child: MaterialApp.router(
@@ -56,7 +59,7 @@ class MyApp extends StatelessWidget {
         theme: AppTheme.lightTheme,
         darkTheme: AppTheme.darkTheme,
         themeMode: ThemeMode.light,
-        routerConfig: AppRouter.router,
+        routerConfig: appRouter.router,
       ),
     );
   }

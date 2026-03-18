@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../features/attendance/presentation/pages/attendance_history_screen.dart';
 import '../../features/attendance/presentation/pages/mark_attendance_screen.dart';
+import '../../features/auth/presentation/bloc/auth_bloc.dart';
+import '../../features/auth/presentation/bloc/auth_state.dart';
 import '../../features/leaves/presentation/pages/apply_leave_screen.dart';
 import '../../features/leaves/presentation/pages/leave_history_screen.dart';
 import '../../features/leaves/presentation/pages/pending_leaves_screen.dart';
@@ -56,13 +60,19 @@ import '../../features/admin/presentation/pages/generator_screen.dart';
 /// - /profile - User profile
 
 class AppRouter {
-  static final _storageHelper = StorageHelper();
+  final StorageHelper _storageHelper;
+  late final GoRouter router;
 
-  static final GoRouter router = GoRouter(
-    initialLocation: '/splash',
-    debugLogDiagnostics: true,
-    redirect: _handleRedirect,
-    routes: [
+  AppRouter({
+    required AuthBloc authBloc,
+    StorageHelper? storageHelper,
+  }) : _storageHelper = storageHelper ?? StorageHelper() {
+    router = GoRouter(
+      initialLocation: '/splash',
+      debugLogDiagnostics: true,
+      refreshListenable: GoRouterRefreshStream(authBloc.stream),
+      redirect: _handleRedirect,
+      routes: [
       // ========== SPLASH ==========
       GoRoute(
         path: '/splash',
@@ -233,12 +243,13 @@ class AppRouter {
         name: 'admin-generator',
         builder: (context, state) => const GeneratorScreen(),
       ),
-    ],
-    errorBuilder: (context, state) => const ErrorScreen(),
-  );
+      ],
+      errorBuilder: (context, state) => const ErrorScreen(),
+    );
+  }
 
   /// Handle redirects for authentication
-  static Future<String?> _handleRedirect(
+  Future<String?> _handleRedirect(
       BuildContext context,
       GoRouterState state,
       ) async {
@@ -263,6 +274,20 @@ class AppRouter {
 
     // No redirect needed
     return null;
+  }
+}
+
+class GoRouterRefreshStream extends ChangeNotifier {
+  late final StreamSubscription<AuthState> _subscription;
+
+  GoRouterRefreshStream(Stream<AuthState> stream) {
+    _subscription = stream.asBroadcastStream().listen((_) => notifyListeners());
+  }
+
+  @override
+  void dispose() {
+    _subscription.cancel();
+    super.dispose();
   }
 }
 

@@ -56,14 +56,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       Emitter<AuthState> emit,
       ) async {
     emit(const AuthLoading());
-
-    final result = await authRepository.logout();
-
-    // Whether success or failure, always go to Unauthenticated
-    result.fold(
-          (_) => emit(const Unauthenticated()),
-          (_) => emit(const Unauthenticated()),
-    );
+    try {
+      await authRepository.logout();
+    } catch (_) {
+      // Even if local cleanup throws, force the app back to logged-out state.
+    } finally {
+      emit(const Unauthenticated());
+    }
   }
 
   // ── Get Profile ───────────────────────────────────────────────────────────
