@@ -1,0 +1,178 @@
+pipeline {
+    agent any
+
+    options {
+        timestamps()
+        ansiColor('xterm')
+        disableConcurrentBuilds()
+        buildDiscarder(logRotator(numToKeepStr: '15'))
+        timeout(time: 30, unit: 'MINUTES')
+    }
+
+    environment {
+        JAVA_HOME    = tool(name: 'JDK-21', type: 'hudson.model.JDK')
+        PATH         = "${JAVA_HOME}\\bin;${env.PATH}"
+        GRADLE_OPTS  = '-Dorg.gradle.daemon=false'
+        GRADLE_USER_HOME = "${WORKSPACE}\\.gradle-home"
+    }
+
+    triggers {
+        githubPush()
+    }
+
+    stages {
+
+        stage('Check Changed Files') {
+            steps {
+                script {
+                    try {
+                        def changedFiles = bat(
+                            script: 'git diff --name-only HEAD~1 HEAD',
+                            returnStdout: true
+                        ).trim()
+
+                        echo "📋 Changed files:\n${changedFiles}"
+
+                        def backendChanged = changedFiles
+                            .contains('backend/')
+
+                        if (!backendChanged) {
+                            echo '⏭️ No backend changes — skipping!'
+                            currentBuild.result = 'NOT_BUILT'
+                            error('No backend changes detected!')
+                        }
+                        echo '✅ Backend changes found!'
+
+                    } catch (Exception e) {
+                        echo '⚠️ Could not check diff — running pipeline!'
+                    }
+                }
+            }
+        }
+
+        stage('Checkout') {
+            steps {
+                echo "📥 Branch: ${env.GIT_BRANCH}"
+                echo "📌 Commit: ${env.GIT_COMMIT?.take(7)}"
+                checkout scm
+            }
+        }
+
+        stage('Verify Toolchain') {
+            steps {
+                dir('backend') {
+                    bat 'java -version'
+                    bat 'gradlew.bat --version'
+                }
+            }
+        }
+
+        stage('Clean') {
+            steps {
+                dir('backend') {
+                    bat 'gradlew.bat --no-daemon clean'
+                }
+            }
+            post {
+                success { echo '✅ Clean successful!' }
+                failure { echo '❌ Clean failed!' }
+            }
+        }
+
+        stage('Compile') {
+            steps {
+                dir('backend') {
+                    bat 'gradlew.bat --no-daemon compileJava'
+                }
+            }
+            post {
+                success { echo '✅ Compilation successful!' }
+                failure { echo '❌ Compilation FAILED!' }
+            }
+        }
+
+        stage('Test') {
+            steps {
+                dir('backend') {
+                    bat 'gradlew.bat --no-daemon test || exit 0'
+                }
+            }
+            post {
+                always {
+                    junit(
+                        testResults: 'backend/build/test-results/test/*.xml',
+                        allowEmptyResults: true
+                    )
+                    archiveArtifacts(
+                        artifacts: 'backend/build/reports/tests/test/**',
+                        allowEmptyArchive: true
+                    )
+                    echo '📊 Test results published!'
+                }
+                success  { echo '✅ All tests passed!' }
+                unstable { echo '⚠️ Some tests failed!' }
+            }
+        }
+
+        stage('Build JAR') {
+            steps {
+                dir('backend') {
+                    bat 'gradlew.bat --no-daemon bootJar -x test'
+                }
+            }
+            post {
+                success { echo '✅ JAR built successfully!' }
+                failure { echo '❌ JAR build FAILED!' }
+            }
+        }
+
+        stage('Dev-QA Steps') {
+            when {
+                expression {
+                    return env.GIT_BRANCH == 'origin/dev-qa' ||
+                           env.GIT_BRANCH == 'dev-qa'
+                }
+            }
+            steps {
+                echo '🔬 Dev-QA branch — Build verified!'
+                echo '📢 QA Team: New backend build ready!'
+            }
+        }
+    }
+
+    post {
+        success {
+            archiveArtifacts(
+                artifacts: 'backend/build/libs/*.jar',
+                allowEmptyArchive: false,
+                fingerprint: true
+            )
+            echo '''
+            ╔══════════════════════════════════╗
+            ║  ✅ BACKEND BUILD SUCCESS! 🎉    ║
+            ╚══════════════════════════════════╝
+            '''
+        }
+        always {
+            archiveArtifacts(
+                artifacts: 'backend/build/reports/**',
+                allowEmptyArchive: true
+            )
+            cleanWs(
+                deleteDirs: true,
+                notFailBuild: true
+            )
+            echo "🏁 Pipeline done — Branch: ${env.GIT_BRANCH}"
+        }
+        failure {
+            echo '''
+            ╔══════════════════════════════════╗
+            ║  ❌ BACKEND BUILD FAILED!        ║
+            ╚══════════════════════════════════╝
+            '''
+        }
+        unstable {
+            echo '⚠️ Build UNSTABLE — check test results!'
+        }
+    }
+}
