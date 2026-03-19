@@ -157,6 +157,10 @@ public class JwtTokenProvider {
             log.warn("JWT token is unsupported: {}", e.getMessage());
         } catch (IllegalArgumentException e) {
             log.warn("JWT claims string is empty: {}", e.getMessage());
+        } catch (SecurityException e) {
+            log.warn("Invalid JWT signature: {}", e.getMessage());
+        } catch (Exception e) {
+            log.warn("JWT validation error: {}", e.getMessage());
         }
         return false;
     }
