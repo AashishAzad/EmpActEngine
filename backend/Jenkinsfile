@@ -10,9 +10,9 @@ pipeline {
     }
 
     environment {
-        JAVA_HOME    = tool(name: 'JDK-21', type: 'hudson.model.JDK')
-        PATH         = "${JAVA_HOME}\\bin;${env.PATH}"
-        GRADLE_OPTS  = '-Dorg.gradle.daemon=false'
+        JAVA_HOME        = tool(name: 'JDK-21', type: 'hudson.model.JDK')
+        PATH             = "${JAVA_HOME}\\bin;${env.PATH}"
+        GRADLE_OPTS      = '-Dorg.gradle.daemon=false'
         GRADLE_USER_HOME = "${WORKSPACE}\\.gradle-home"
     }
 
@@ -99,15 +99,7 @@ pipeline {
             }
             post {
                 always {
-                    junit(
-                        testResults: 'backend/build/test-results/test/*.xml',
-                        allowEmptyResults: true
-                    )
-                    archiveArtifacts(
-                        artifacts: 'backend/build/reports/tests/test/**',
-                        allowEmptyArchive: true
-                    )
-                    echo '📊 Test results published!'
+                    echo '📊 Test stage completed!'
                 }
                 success  { echo '✅ All tests passed!' }
                 unstable { echo '⚠️ Some tests failed!' }
@@ -142,27 +134,11 @@ pipeline {
 
     post {
         success {
-            archiveArtifacts(
-                artifacts: 'backend/build/libs/*.jar',
-                allowEmptyArchive: false,
-                fingerprint: true
-            )
             echo '''
             ╔══════════════════════════════════╗
             ║  ✅ BACKEND BUILD SUCCESS! 🎉    ║
             ╚══════════════════════════════════╝
             '''
-        }
-        always {
-            archiveArtifacts(
-                artifacts: 'backend/build/reports/**',
-                allowEmptyArchive: true
-            )
-            cleanWs(
-                deleteDirs: true,
-                notFailBuild: true
-            )
-            echo "🏁 Pipeline done — Branch: ${env.GIT_BRANCH}"
         }
         failure {
             echo '''
@@ -173,6 +149,28 @@ pipeline {
         }
         unstable {
             echo '⚠️ Build UNSTABLE — check test results!'
+        }
+        always {
+            // Archive PEHLE
+            archiveArtifacts(
+                artifacts: 'backend/build/libs/*.jar',
+                allowEmptyArchive: true,
+                fingerprint: true
+            )
+            archiveArtifacts(
+                artifacts: 'backend/build/reports/**',
+                allowEmptyArchive: true
+            )
+            junit(
+                testResults: 'backend/build/test-results/test/*.xml',
+                allowEmptyResults: true
+            )
+            // Cleanup BAAD MEIN
+            cleanWs(
+                deleteDirs: true,
+                notFailBuild: true
+            )
+            echo "🏁 Pipeline done — Branch: ${env.GIT_BRANCH}"
         }
     }
 }

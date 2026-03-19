@@ -211,12 +211,12 @@ class LeaveServiceTest {
                 .numberOfDays(1)
                 .build();
 
-        when(leaveRepository.findPendingLeaves("EMPLOYEE")).thenReturn(List.of(leave));
+        when(leaveRepository.findPendingLeaves(UserRole.EMPLOYEE)).thenReturn(List.of(leave));
 
         List<LeaveResponse> result = leaveService.getPendingLeaves(UserRole.MANAGER);
 
         assertThat(result).hasSize(1);
-        verify(leaveRepository).findPendingLeaves("EMPLOYEE");
+        verify(leaveRepository).findPendingLeaves(UserRole.EMPLOYEE);
     }
 
     @Test
