@@ -37,71 +37,71 @@ class _SplashScreenState extends State<SplashScreen> {
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is Authenticated) {
-            // User is logged in, go to home
             context.go('/home');
           } else if (state is Unauthenticated) {
-            // User is not logged in, go to login
             context.go('/login');
           }
         },
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // App Icon/Logo
-              Container(
-                width: 120,
-                height: 120,
-                decoration: BoxDecoration(
-                  color: AppColors.white,
-                  borderRadius: BorderRadius.circular(30),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.black.withOpacity(0.2),
-                      blurRadius: 20,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
-                ),
-                child: const Icon(
-                  Icons.business_center,
-                  size: 60,
-                  color: AppColors.primary,
-                ),
-              ),
-              const SizedBox(height: 32),
+        child: const AppSplashView(),
+      ),
+    );
+  }
+}
 
-              // App Name
-              Text(
-                'Employee Activity',
-                style: AppTextStyles.displayMedium.copyWith(
-                  color: AppColors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
+class AppSplashView extends StatelessWidget {
+  const AppSplashView({super.key});
 
-              // Company Name
-              Text(
-                '909 Technologies',
-                style: AppTextStyles.titleLarge.copyWith(
-                  color: AppColors.white.withOpacity(0.9),
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 120,
+            height: 120,
+            decoration: BoxDecoration(
+              color: AppColors.white,
+              borderRadius: BorderRadius.circular(30),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.black.withOpacity(0.2),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
                 ),
-              ),
-              const SizedBox(height: 48),
-
-              // Loading Indicator
-              const SizedBox(
-                width: 40,
-                height: 40,
-                child: CircularProgressIndicator(
-                  strokeWidth: 3,
-                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.white),
-                ),
-              ),
-            ],
+              ],
+            ),
+            child: const Icon(
+              Icons.business_center,
+              size: 60,
+              color: AppColors.primary,
+            ),
           ),
-        ),
+          const SizedBox(height: 32),
+          Text(
+            'Employee Activity',
+            style: AppTextStyles.displayMedium.copyWith(
+              color: AppColors.white,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '909 Technologies',
+            style: AppTextStyles.titleLarge.copyWith(
+              color: AppColors.white.withOpacity(0.9),
+            ),
+          ),
+          const SizedBox(height: 48),
+          const SizedBox(
+            width: 40,
+            height: 40,
+            child: CircularProgressIndicator(
+              strokeWidth: 3,
+              valueColor: AlwaysStoppedAnimation<Color>(AppColors.white),
+            ),
+          ),
+        ],
       ),
     );
   }

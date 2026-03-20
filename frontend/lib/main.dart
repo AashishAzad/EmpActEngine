@@ -7,33 +7,81 @@ import 'core/network/dio_client.dart';
 import 'features/auth/data/datasources/auth_remote_data_source.dart';
 import 'features/auth/data/repositories/auth_repository_impl.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
+import 'features/auth/presentation/pages/splash_screen.dart';
 
-void main() async {
-  // Ensure Flutter is initialized
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize storage
   final storageHelper = StorageHelper();
-  await storageHelper.init();
-
-  runApp(const MyApp());
+  runApp(
+    AppBootstrap(
+      storageHelper: storageHelper,
+      initialization: storageHelper.init(),
+    ),
+  );
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class AppBootstrap extends StatelessWidget {
+  const AppBootstrap({
+    required this.storageHelper,
+    required this.initialization,
+    super.key,
+  });
+
+  final StorageHelper storageHelper;
+  final Future<void> initialization;
 
   @override
   Widget build(BuildContext context) {
-    // Initialize dependencies
-    final dioClient = DioClient();
-    final storageHelper = StorageHelper();
+    return FutureBuilder<void>(
+      future: initialization,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return MaterialApp(
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: ThemeMode.light,
+            home: const Scaffold(
+              backgroundColor: Color(0xFF2196F3),
+              body: AppSplashView(),
+            ),
+          );
+        }
 
-    // Create data sources
+        if (snapshot.hasError) {
+          return MaterialApp(
+            debugShowCheckedModeBanner: false,
+            home: Scaffold(
+              body: Center(
+                child: Text('Failed to start app: ${snapshot.error}'),
+              ),
+            ),
+          );
+        }
+
+        return MyApp(storageHelper: storageHelper);
+      },
+    );
+  }
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({
+    required this.storageHelper,
+    super.key,
+  });
+
+  final StorageHelper storageHelper;
+
+  @override
+  Widget build(BuildContext context) {
+    final dioClient = DioClient();
+
     final authRemoteDataSource = AuthRemoteDataSourceImpl(
       dioClient: dioClient,
     );
 
-    // Create repositories
     final authRepository = AuthRepositoryImpl(
       remoteDataSource: authRemoteDataSource,
       storageHelper: storageHelper,
@@ -49,9 +97,7 @@ class MyApp extends StatelessWidget {
 
     return MultiBlocProvider(
       providers: [
-        // Auth BLoC
         BlocProvider.value(value: authBloc),
-        // Add more BLoCs here as you create them
       ],
       child: MaterialApp.router(
         title: 'Employee Activity',
