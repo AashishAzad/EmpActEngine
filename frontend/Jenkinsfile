@@ -21,7 +21,6 @@ pipeline {
 
     stages {
 
-        // ─────────────────────────────────────────
         stage('Check Changed Files') {
             steps {
                 script {
@@ -50,7 +49,6 @@ pipeline {
             }
         }
 
-        // ─────────────────────────────────────────
         stage('Checkout') {
             steps {
                 echo "📥 Branch: ${env.GIT_BRANCH}"
@@ -59,7 +57,17 @@ pipeline {
             }
         }
 
-        // ─────────────────────────────────────────
+        // ← NEW STAGE — Git ownership fix
+        stage('Setup Environment') {
+            steps {
+                bat '''
+                    git config --global --add safe.directory C:/Users/aashi/ProjectF/flutter
+                    git config --global --add safe.directory *
+                    echo Git safe directories configured!
+                '''
+            }
+        }
+
         stage('Verify Toolchain') {
             steps {
                 dir('frontend') {
@@ -72,7 +80,6 @@ pipeline {
             }
         }
 
-        // ─────────────────────────────────────────
         stage('Get Dependencies') {
             steps {
                 dir('frontend') {
@@ -85,22 +92,18 @@ pipeline {
             }
         }
 
-        // ─────────────────────────────────────────
         stage('Static Analysis') {
             steps {
                 dir('frontend') {
-                    // --no-fatal-infos → Info level issues
-                    // build fail na kare
                     bat 'flutter analyze --no-fatal-infos'
                 }
             }
             post {
-                success { echo '✅ No critical issues found!' }
-                failure { echo '❌ Analysis found critical issues!' }
+                success { echo '✅ No critical issues!' }
+                failure { echo '❌ Analysis found issues!' }
             }
         }
 
-        // ─────────────────────────────────────────
         stage('Build APK Debug') {
             steps {
                 dir('frontend') {
@@ -109,11 +112,10 @@ pipeline {
             }
             post {
                 success { echo '✅ Debug APK built!' }
-                failure { echo '❌ Debug APK build FAILED!' }
+                failure { echo '❌ Debug APK FAILED!' }
             }
         }
 
-        // ─────────────────────────────────────────
         stage('Build APK Release') {
             when {
                 expression {
@@ -127,12 +129,11 @@ pipeline {
                 }
             }
             post {
-                success { echo '✅ Release APK built!' }
-                failure { echo '❌ Release APK build FAILED!' }
+                success { echo '✅ Release APKs built!' }
+                failure { echo '❌ Release APK FAILED!' }
             }
         }
 
-        // ─────────────────────────────────────────
         stage('Dev-QA Steps') {
             when {
                 expression {
@@ -147,7 +148,6 @@ pipeline {
         }
     }
 
-    // ─────────────────────────────────────────
     post {
         success {
             echo '''
@@ -167,13 +167,11 @@ pipeline {
             echo '⚠️ Build UNSTABLE!'
         }
         always {
-            // Archive pehle
             archiveArtifacts(
                 artifacts: 'frontend/build/app/outputs/flutter-apk/*.apk',
                 allowEmptyArchive: true,
                 fingerprint: true
             )
-            // Cleanup baad mein
             cleanWs(
                 deleteDirs: true,
                 notFailBuild: true
