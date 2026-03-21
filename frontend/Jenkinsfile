@@ -13,6 +13,9 @@ pipeline {
         FLUTTER_HOME = 'C:\\Users\\aashi\\ProjectF\\flutter'
         PATH         = "${FLUTTER_HOME}\\bin;${env.PATH}"
         PUB_CACHE    = "${WORKSPACE}\\.pub-cache"
+
+        ANDROID_HOME     = 'C:\\Users\\aashi\\AppData\\Local\\Android\\Sdk'
+        ANDROID_SDK_ROOT = 'C:\\Users\\aashi\\AppData\\Local\\Android\\Sdk'
     }
 
     triggers {
@@ -64,6 +67,8 @@ pipeline {
                     git config --global --add safe.directory C:/Users/aashi/ProjectF/flutter
                     git config --global --add safe.directory *
                     echo Git safe directories configured!
+                    echo ANDROID_HOME=%ANDROID_HOME%
+                    echo FLUTTER_HOME=%FLUTTER_HOME%
                 '''
             }
         }
