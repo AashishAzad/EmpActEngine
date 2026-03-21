@@ -1,0 +1,184 @@
+pipeline {
+    agent any
+
+    options {
+        timestamps()
+        ansiColor('xterm')
+        disableConcurrentBuilds()
+        buildDiscarder(logRotator(numToKeepStr: '15'))
+        timeout(time: 45, unit: 'MINUTES')
+    }
+
+    environment {
+        FLUTTER_HOME = 'C:\\Users\\aashi\\ProjectF\\flutter'
+        PATH         = "${FLUTTER_HOME}\\bin;${env.PATH}"
+        PUB_CACHE    = "${WORKSPACE}\\.pub-cache"
+    }
+
+    triggers {
+        githubPush()
+    }
+
+    stages {
+
+        // ─────────────────────────────────────────
+        stage('Check Changed Files') {
+            steps {
+                script {
+                    try {
+                        def changedFiles = bat(
+                            script: 'git diff --name-only HEAD~1 HEAD',
+                            returnStdout: true
+                        ).trim()
+
+                        echo "📋 Changed files:\n${changedFiles}"
+
+                        def frontendChanged = changedFiles
+                            .contains('frontend/')
+
+                        if (!frontendChanged) {
+                            echo '⏭️ No frontend changes — skipping!'
+                            currentBuild.result = 'NOT_BUILT'
+                            error('No frontend changes detected!')
+                        }
+                        echo '✅ Frontend changes found!'
+
+                    } catch (Exception e) {
+                        echo '⚠️ Could not check diff — running pipeline!'
+                    }
+                }
+            }
+        }
+
+        // ─────────────────────────────────────────
+        stage('Checkout') {
+            steps {
+                echo "📥 Branch: ${env.GIT_BRANCH}"
+                echo "📌 Commit: ${env.GIT_COMMIT?.take(7)}"
+                checkout scm
+            }
+        }
+
+        // ─────────────────────────────────────────
+        stage('Verify Toolchain') {
+            steps {
+                dir('frontend') {
+                    bat 'flutter --version'
+                }
+            }
+            post {
+                success { echo '✅ Flutter verified!' }
+                failure { echo '❌ Flutter not found!' }
+            }
+        }
+
+        // ─────────────────────────────────────────
+        stage('Get Dependencies') {
+            steps {
+                dir('frontend') {
+                    bat 'flutter pub get'
+                }
+            }
+            post {
+                success { echo '✅ Dependencies resolved!' }
+                failure { echo '❌ pub get FAILED!' }
+            }
+        }
+
+        // ─────────────────────────────────────────
+        stage('Static Analysis') {
+            steps {
+                dir('frontend') {
+                    // --no-fatal-infos → Info level issues
+                    // build fail na kare
+                    bat 'flutter analyze --no-fatal-infos'
+                }
+            }
+            post {
+                success { echo '✅ No critical issues found!' }
+                failure { echo '❌ Analysis found critical issues!' }
+            }
+        }
+
+        // ─────────────────────────────────────────
+        stage('Build APK Debug') {
+            steps {
+                dir('frontend') {
+                    bat 'flutter build apk --debug'
+                }
+            }
+            post {
+                success { echo '✅ Debug APK built!' }
+                failure { echo '❌ Debug APK build FAILED!' }
+            }
+        }
+
+        // ─────────────────────────────────────────
+        stage('Build APK Release') {
+            when {
+                expression {
+                    return env.GIT_BRANCH == 'origin/dev-qa' ||
+                           env.GIT_BRANCH == 'dev-qa'
+                }
+            }
+            steps {
+                dir('frontend') {
+                    bat 'flutter build apk --release --split-per-abi'
+                }
+            }
+            post {
+                success { echo '✅ Release APK built!' }
+                failure { echo '❌ Release APK build FAILED!' }
+            }
+        }
+
+        // ─────────────────────────────────────────
+        stage('Dev-QA Steps') {
+            when {
+                expression {
+                    return env.GIT_BRANCH == 'origin/dev-qa' ||
+                           env.GIT_BRANCH == 'dev-qa'
+                }
+            }
+            steps {
+                echo '🔬 Dev-QA branch — Flutter build verified!'
+                echo '📢 QA Team: New APK ready for testing!'
+            }
+        }
+    }
+
+    // ─────────────────────────────────────────
+    post {
+        success {
+            echo '''
+            ╔══════════════════════════════════╗
+            ║  ✅ FLUTTER BUILD SUCCESS! 🎉    ║
+            ╚══════════════════════════════════╝
+            '''
+        }
+        failure {
+            echo '''
+            ╔══════════════════════════════════╗
+            ║  ❌ FLUTTER BUILD FAILED!        ║
+            ╚══════════════════════════════════╝
+            '''
+        }
+        unstable {
+            echo '⚠️ Build UNSTABLE!'
+        }
+        always {
+            // Archive pehle
+            archiveArtifacts(
+                artifacts: 'frontend/build/app/outputs/flutter-apk/*.apk',
+                allowEmptyArchive: true,
+                fingerprint: true
+            )
+            // Cleanup baad mein
+            cleanWs(
+                deleteDirs: true,
+                notFailBuild: true
+            )
+            echo "🏁 Flutter pipeline done — Branch: ${env.GIT_BRANCH}"
+        }
+    }
+}
