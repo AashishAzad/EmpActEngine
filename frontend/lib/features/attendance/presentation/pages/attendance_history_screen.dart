@@ -49,7 +49,9 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
         year: _selectedMonth.year,
       );
       setState(() {
-        _attendanceRecords = raw.cast<Map<String, dynamic>>();
+        _attendanceRecords = _buildMonthlyAttendanceRecords(
+          raw.cast<Map<String, dynamic>>(),
+        );
         _isLoading = false;
       });
     } catch (e) {
@@ -81,13 +83,55 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
       _attendanceRecords.where((r) => r['status'] == 'PRESENT').length;
 
   int get _absentCount =>
-      _attendanceRecords
-          .where((r) => r['status'] == 'ABSENT' || r['status'] == 'LEAVE')
-          .length;
+      _attendanceRecords.where((r) => r['status'] == 'ABSENT').length;
 
-  int get _percentage => _attendanceRecords.isEmpty
-      ? 0
-      : (_presentCount / _attendanceRecords.length * 100).round();
+  int get _percentage {
+    final workingDayCount = _attendanceRecords
+        .where((r) => r['status'] != 'WEEKEND')
+        .length;
+    if (workingDayCount == 0) return 0;
+    return (_presentCount / workingDayCount * 100).round();
+  }
+
+  List<Map<String, dynamic>> _buildMonthlyAttendanceRecords(
+    List<Map<String, dynamic>> rawRecords,
+  ) {
+    final recordsByDate = <String, Map<String, dynamic>>{};
+
+    for (final record in rawRecords) {
+      final rawDate = record['date']?.toString();
+      if (rawDate == null || rawDate.isEmpty) continue;
+      recordsByDate[rawDate] = Map<String, dynamic>.from(record);
+    }
+
+    final now = DateTime.now();
+    final isCurrentMonth = _selectedMonth.year == now.year &&
+        _selectedMonth.month == now.month;
+    final lastVisibleDay = isCurrentMonth
+        ? now.day
+        : DateTime(_selectedMonth.year, _selectedMonth.month + 1, 0).day;
+
+    final monthlyRecords = <Map<String, dynamic>>[];
+
+    for (int day = lastVisibleDay; day >= 1; day--) {
+      final date = DateTime(_selectedMonth.year, _selectedMonth.month, day);
+      final isoDate = DateFormat('yyyy-MM-dd').format(date);
+      monthlyRecords.add(
+        recordsByDate[isoDate] ??
+            {
+              'date': isoDate,
+              'status': date.weekday == DateTime.saturday ||
+                      date.weekday == DateTime.sunday
+                  ? 'WEEKEND'
+                  : 'ABSENT',
+              'checkInTime': null,
+              'checkOutTime': null,
+            },
+      );
+    }
+
+    return monthlyRecords;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -144,7 +188,7 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
                   child: _buildSummaryCard(
                     'Absent',
                     _absentCount.toString(),
-                    AppColors.warning,
+                    AppColors.error,
                     Icons.event_busy,
                   ),
                 ),
@@ -166,23 +210,20 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
             child: _isLoading
                 ? const LoadingIndicator(message: 'Loading attendance...')
                 : _attendanceRecords.isEmpty
-                ? const EmptyState(
-              icon: Icons.event_note,
-              title: 'No Attendance Records',
-              message:
-              'No attendance records found for this month',
-            )
+                    ? const EmptyState(
+                        icon: Icons.event_note,
+                        title: 'No Attendance Records',
+                        message: 'No attendance records found for this month',
+                      )
                 : RefreshIndicator(
-              onRefresh: _loadAttendanceHistory,
-              child: ListView.builder(
-                padding:
-                const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: _attendanceRecords.length,
-                itemBuilder: (context, index) =>
-                    _buildAttendanceCard(
-                        _attendanceRecords[index]),
-              ),
-            ),
+                    onRefresh: _loadAttendanceHistory,
+                    child: ListView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: _attendanceRecords.length,
+                      itemBuilder: (context, index) =>
+                          _buildAttendanceCard(_attendanceRecords[index]),
+                    ),
+                  ),
           ),
         ],
       ),
@@ -225,8 +266,13 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
     if (date == null) return const SizedBox.shrink();
 
     final status = record['status']?.toString() ?? 'UNKNOWN';
-    final statusColor = AppColors.getAttendanceColor(status);
+    final statusColor = switch (status) {
+      'ABSENT' => AppColors.error,
+      'WEEKEND' => AppColors.textSecondary,
+      _ => AppColors.getAttendanceColor(status),
+    };
     final isToday = app_date.DateUtils.isToday(date);
+    final statusLabel = _formatStatusLabel(status);
 
     // checkInTime / checkOutTime are LocalDateTime → "2026-02-23T09:15:00"
     // Format to show time only: "09:15 AM"
@@ -314,13 +360,15 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
                     Icon(
                       status == 'PRESENT'
                           ? Icons.check_circle
+                          : status == 'WEEKEND'
+                              ? Icons.weekend
                           : Icons.event_busy,
                       size: 14,
                       color: statusColor,
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      status,
+                      statusLabel,
                       style: AppTextStyles.caption.copyWith(
                         color: statusColor,
                         fontWeight: FontWeight.w600,
@@ -356,6 +404,24 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
       return DateFormat('hh:mm a').format(dt);
     } catch (_) {
       return isoString; // fallback: show raw if parse fails
+    }
+  }
+
+  String _formatStatusLabel(String status) {
+    switch (status.trim().toUpperCase()) {
+      case 'PRESENT':
+      case 'MANUAL_APPROVED':
+        return 'Present';
+      case 'ABSENT':
+        return 'Absent';
+      case 'LEAVE':
+        return 'Leave';
+      case 'HOLIDAY':
+        return 'Holiday';
+      case 'WEEKEND':
+        return 'Weekend';
+      default:
+        return status;
     }
   }
 }

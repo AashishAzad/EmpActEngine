@@ -55,14 +55,15 @@ class DioClient {
         return handler.next(options);
       },
       onError: (error, handler) async {
-        // Handle 401 Unauthorized - Token expired
-        if (error.response?.statusCode == 401) {
+        // Some backend auth failures come back as 403 instead of 401.
+        if (_shouldAttemptTokenRefresh(error)) {
           // Try to refresh token
           final refreshed = await _refreshToken();
 
           if (refreshed) {
             // Retry the request with new token
             final options = error.requestOptions;
+            options.extra['tokenRetried'] = true;
             final token = await _secureStorage.read(
               key: StorageConstants.accessToken,
             );
@@ -80,6 +81,22 @@ class DioClient {
         return handler.next(error);
       },
     );
+  }
+
+  bool _shouldAttemptTokenRefresh(DioException error) {
+    final statusCode = error.response?.statusCode;
+    final options = error.requestOptions;
+    final hasAuthHeader = (options.headers['Authorization']?.toString() ?? '')
+        .trim()
+        .isNotEmpty;
+    final alreadyRetried = options.extra['tokenRetried'] == true;
+    final isRefreshCall = options.path == ApiConstants.refresh;
+
+    if (alreadyRetried || isRefreshCall || !hasAuthHeader) {
+      return false;
+    }
+
+    return statusCode == 401 || statusCode == 403;
   }
 
   /// Log Interceptor
