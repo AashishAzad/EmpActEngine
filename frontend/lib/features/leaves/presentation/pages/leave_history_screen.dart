@@ -19,15 +19,19 @@ import '../../data/datasources/leave_remote_data_source.dart';
 /// actionBy, actionDate, createdAt
 
 class LeaveHistoryScreen extends StatefulWidget {
-  const LeaveHistoryScreen({super.key});
+  LeaveHistoryScreen({
+    super.key,
+    LeaveDataSource? dataSource,
+  }) : dataSource = dataSource ??
+            LeaveRemoteDataSource(dioClient: DioClient());
+
+  final LeaveDataSource dataSource;
 
   @override
   State<LeaveHistoryScreen> createState() => _LeaveHistoryScreenState();
 }
 
 class _LeaveHistoryScreenState extends State<LeaveHistoryScreen> {
-  final _dataSource = LeaveRemoteDataSource(dioClient: DioClient());
-
   bool _isLoading = false;
   List<Map<String, dynamic>> _applications = [];
   String _selectedFilter = 'ALL';
@@ -42,7 +46,7 @@ class _LeaveHistoryScreenState extends State<LeaveHistoryScreen> {
     setState(() => _isLoading = true);
     try {
       // GET /leaves/my-leaves → List<LeaveResponse> directly
-      final raw = await _dataSource.getMyLeaves();
+      final raw = await widget.dataSource.getMyLeaves();
       setState(() {
         _applications = raw.cast<Map<String, dynamic>>();
         _isLoading = false;

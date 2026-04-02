@@ -16,7 +16,20 @@ import '../../../../core/network/dio_client.dart';
 /// visibleTill (LocalDateTime, optional),
 /// referenceId (optional), referenceType (optional)
 
-class AdminNotificationDataSource {
+abstract class AdminNotificationSource {
+  Future<Map<String, dynamic>> createNotification({
+    required String title,
+    required String message,
+    required String type,
+    bool isGlobal = false,
+    List<String>? recipientIds,
+    DateTime? visibleTill,
+    String? referenceId,
+    String? referenceType,
+  });
+}
+
+class AdminNotificationDataSource implements AdminNotificationSource {
   final DioClient dioClient;
 
   AdminNotificationDataSource({required this.dioClient});

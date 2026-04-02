@@ -9,6 +9,16 @@ import '../../../../shared/widgets/loading_indicator.dart';
 import '../../../admin/data/datasources/admin_employee_data_source.dart';
 import '../../../admin/data/datasources/admin_payroll_data_source.dart';
 
+class SelectedPdfFile {
+  const SelectedPdfFile({
+    required this.path,
+    required this.name,
+  });
+
+  final String path;
+  final String name;
+}
+
 /// Generator Screen
 ///
 /// Two tabs:
@@ -16,7 +26,35 @@ import '../../../admin/data/datasources/admin_payroll_data_source.dart';
 /// 2. Upload Letters   — POST /letters/{id}/upload (multipart PDF)
 
 class GeneratorScreen extends StatefulWidget {
-  const GeneratorScreen({super.key});
+  GeneratorScreen({
+    super.key,
+    AdminEmployeeSource? employeeDataSource,
+    AdminPayrollSource? payrollDataSource,
+    Future<SelectedPdfFile?> Function()? pickPdfFile,
+  })  : employeeDataSource =
+            employeeDataSource ?? AdminEmployeeDataSource(dioClient: DioClient()),
+        payrollDataSource =
+            payrollDataSource ?? AdminPayrollDataSource(dioClient: DioClient()),
+        pickPdfFile = pickPdfFile ?? _defaultPickPdfFile;
+
+  final AdminEmployeeSource employeeDataSource;
+  final AdminPayrollSource payrollDataSource;
+  final Future<SelectedPdfFile?> Function() pickPdfFile;
+
+  static Future<SelectedPdfFile?> _defaultPickPdfFile() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['pdf'],
+    );
+    if (result == null || result.files.single.path == null) {
+      return null;
+    }
+
+    return SelectedPdfFile(
+      path: result.files.single.path!,
+      name: result.files.single.name,
+    );
+  }
 
   @override
   State<GeneratorScreen> createState() => _GeneratorScreenState();
@@ -59,9 +97,15 @@ class _GeneratorScreenState extends State<GeneratorScreen>
       ),
       body: TabBarView(
         controller: _tabController,
-        children: const [
-          GeneratePayslipTab(),
-          UploadLettersTab(),
+        children: [
+          GeneratePayslipTab(
+            employeeDataSource: widget.employeeDataSource,
+            payrollDataSource: widget.payrollDataSource,
+          ),
+          UploadLettersTab(
+            payrollDataSource: widget.payrollDataSource,
+            pickPdfFile: widget.pickPdfFile,
+          ),
         ],
       ),
     );
@@ -75,18 +119,20 @@ class _GeneratorScreenState extends State<GeneratorScreen>
 // ══════════════════════════════════════════════════════════════════════════════
 
 class GeneratePayslipTab extends StatefulWidget {
-  const GeneratePayslipTab({super.key});
+  const GeneratePayslipTab({
+    super.key,
+    required this.employeeDataSource,
+    required this.payrollDataSource,
+  });
+
+  final AdminEmployeeSource employeeDataSource;
+  final AdminPayrollSource payrollDataSource;
 
   @override
   State<GeneratePayslipTab> createState() => _GeneratePayslipTabState();
 }
 
 class _GeneratePayslipTabState extends State<GeneratePayslipTab> {
-  final _employeeDataSource =
-  AdminEmployeeDataSource(dioClient: DioClient());
-  final _payrollDataSource =
-  AdminPayrollDataSource(dioClient: DioClient());
-
   bool _isLoading = false;
   bool _isLoadingEmployees = false;
   List<dynamic> _employees = [];
@@ -104,7 +150,7 @@ class _GeneratePayslipTabState extends State<GeneratePayslipTab> {
   Future<void> _loadEmployees() async {
     setState(() => _isLoadingEmployees = true);
     try {
-      final employees = await _employeeDataSource.getAllEmployees();
+      final employees = await widget.employeeDataSource.getAllEmployees();
       setState(() {
         _employees = employees
             .where((emp) => emp['status'] != 'TERMINATED')
@@ -134,7 +180,7 @@ class _GeneratePayslipTabState extends State<GeneratePayslipTab> {
       // GeneratePayslipRequest: employeeId (UUID), month, year
       // NOTE: must send 'id' (UUID), NOT 'employeeId' (e.g. "EMP001")
       // NOTE: workingDays, presentDays, leaveDays do NOT exist in GeneratePayslipRequest
-      await _payrollDataSource.generatePayslip(
+      await widget.payrollDataSource.generatePayslip(
         employeeId: _selectedEmployeeUuid!,
         month: _selectedMonth,
         year: _selectedYear,
@@ -321,16 +367,20 @@ class _GeneratePayslipTabState extends State<GeneratePayslipTab> {
 // ══════════════════════════════════════════════════════════════════════════════
 
 class UploadLettersTab extends StatefulWidget {
-  const UploadLettersTab({super.key});
+  const UploadLettersTab({
+    super.key,
+    required this.payrollDataSource,
+    required this.pickPdfFile,
+  });
+
+  final AdminPayrollSource payrollDataSource;
+  final Future<SelectedPdfFile?> Function() pickPdfFile;
 
   @override
   State<UploadLettersTab> createState() => _UploadLettersTabState();
 }
 
 class _UploadLettersTabState extends State<UploadLettersTab> {
-  final _payrollDataSource =
-  AdminPayrollDataSource(dioClient: DioClient());
-
   bool _isLoading = false;
   bool _isLoadingRequests = false;
   List<dynamic> _pendingLetterRequests = [];
@@ -348,7 +398,7 @@ class _UploadLettersTabState extends State<UploadLettersTab> {
   Future<void> _loadPendingRequests() async {
     setState(() => _isLoadingRequests = true);
     try {
-      final requests = await _payrollDataSource.getPendingLetterRequests();
+      final requests = await widget.payrollDataSource.getPendingLetterRequests();
       setState(() {
         _pendingLetterRequests = requests;
         _isLoadingRequests = false;
@@ -360,14 +410,11 @@ class _UploadLettersTabState extends State<UploadLettersTab> {
 
   Future<void> _pickFile() async {
     // Backend serves letters as APPLICATION_PDF — only accept PDF
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['pdf'],
-    );
-    if (result != null && result.files.single.path != null) {
+    final result = await widget.pickPdfFile();
+    if (result != null) {
       setState(() {
-        _selectedFilePath = result.files.single.path!;
-        _selectedFileName = result.files.single.name;
+        _selectedFilePath = result.path;
+        _selectedFileName = result.name;
       });
     }
   }
@@ -395,7 +442,7 @@ class _UploadLettersTabState extends State<UploadLettersTab> {
     setState(() => _isLoading = true);
 
     try {
-      await _payrollDataSource.uploadLetter(
+      await widget.payrollDataSource.uploadLetter(
         requestId: _selectedRequestId!,
         filePath: _selectedFilePath!,
       );

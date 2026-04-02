@@ -14,14 +14,18 @@ import '../../../admin/data/datasources/admin_employee_data_source.dart';
 /// DELETE /employees/{id} → soft delete (status → TERMINATED)
 
 class CompanyScreen extends StatefulWidget {
-  const CompanyScreen({super.key});
+  CompanyScreen({
+    super.key,
+    AdminEmployeeSource? dataSource,
+  }) : dataSource = dataSource ?? AdminEmployeeDataSource(dioClient: DioClient());
+
+  final AdminEmployeeSource dataSource;
 
   @override
   State<CompanyScreen> createState() => _CompanyScreenState();
 }
 
 class _CompanyScreenState extends State<CompanyScreen> {
-  final _dataSource = AdminEmployeeDataSource(dioClient: DioClient());
   final _searchController = TextEditingController();
 
   bool _isLoading = false;
@@ -43,7 +47,7 @@ class _CompanyScreenState extends State<CompanyScreen> {
   Future<void> _loadEmployees() async {
     setState(() => _isLoading = true);
     try {
-      final employees = await _dataSource.getAllEmployees();
+      final employees = await widget.dataSource.getAllEmployees();
       setState(() {
         _employees = employees
             .where((emp) => emp['status'] != 'TERMINATED')
@@ -101,7 +105,7 @@ class _CompanyScreenState extends State<CompanyScreen> {
     if (confirm != true) return;
 
     try {
-      await _dataSource.deleteEmployee(id);
+      await widget.dataSource.deleteEmployee(id);
       setState(() =>
           _employees.removeWhere((emp) => emp['id'].toString() == id));
       if (mounted) {

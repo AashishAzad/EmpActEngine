@@ -15,7 +15,31 @@ import '../../../admin/data/datasources/admin_employee_data_source.dart';
 /// POST /employees → EmployeeResponse (201)
 
 class AddEmployeeScreen extends StatefulWidget {
-  const AddEmployeeScreen({super.key});
+  AddEmployeeScreen({
+    super.key,
+    AdminEmployeeSource? dataSource,
+    Future<DateTime?> Function(BuildContext context)? datePicker,
+  })  : dataSource = dataSource ?? AdminEmployeeDataSource(dioClient: DioClient()),
+        datePicker = datePicker ?? _defaultDatePicker;
+
+  final AdminEmployeeSource dataSource;
+  final Future<DateTime?> Function(BuildContext context) datePicker;
+
+  static Future<DateTime?> _defaultDatePicker(BuildContext context) {
+    return showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime.now(),
+      builder: (context, child) => Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme:
+              const ColorScheme.light(primary: AppColors.primary),
+        ),
+        child: child!,
+      ),
+    );
+  }
 
   @override
   State<AddEmployeeScreen> createState() => _AddEmployeeScreenState();
@@ -23,7 +47,6 @@ class AddEmployeeScreen extends StatefulWidget {
 
 class _AddEmployeeScreenState extends State<AddEmployeeScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _dataSource = AdminEmployeeDataSource(dioClient: DioClient());
 
   final _employeeIdController = TextEditingController();
   final _firstNameController = TextEditingController();
@@ -54,19 +77,7 @@ class _AddEmployeeScreenState extends State<AddEmployeeScreen> {
   }
 
   Future<void> _selectDate() async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime.now(),
-      builder: (context, child) => Theme(
-        data: Theme.of(context).copyWith(
-          colorScheme:
-          const ColorScheme.light(primary: AppColors.primary),
-        ),
-        child: child!,
-      ),
-    );
+    final picked = await widget.datePicker(context);
     if (picked != null) setState(() => _dateOfJoining = picked);
   }
 
@@ -75,7 +86,7 @@ class _AddEmployeeScreenState extends State<AddEmployeeScreen> {
 
     setState(() => _isLoading = true);
     try {
-      await _dataSource.addEmployee(
+      await widget.dataSource.addEmployee(
         employeeId: _employeeIdController.text.trim(),
         email: _emailController.text.trim(),
         password: _passwordController.text,

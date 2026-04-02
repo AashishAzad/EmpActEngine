@@ -14,7 +14,26 @@ import '../../../../core/network/dio_client.dart';
 /// PATCH /leaves/{id}/approve     → LeaveResponse (no body needed)
 /// PATCH /leaves/{id}/reject      → LeaveResponse (body: ActionLeaveRequest)
 
-class LeaveRemoteDataSource {
+abstract class LeaveDataSource {
+  Future<Map<String, dynamic>> applyLeave({
+    required String leaveType,
+    required String startDate,
+    required String endDate,
+    required String contactNumber,
+    required String contactEmail,
+    String? remarks,
+  });
+
+  Future<List<dynamic>> getMyLeaves();
+  Future<List<dynamic>> getPendingLeaves();
+  Future<void> approveLeave({required String leaveId});
+  Future<void> rejectLeave({
+    required String leaveId,
+    required String actionRemarks,
+  });
+}
+
+class LeaveRemoteDataSource implements LeaveDataSource {
   final DioClient dioClient;
 
   LeaveRemoteDataSource({required this.dioClient});
@@ -25,6 +44,7 @@ class LeaveRemoteDataSource {
   /// ApplyLeaveRequest fields:
   /// leaveType (LeaveType enum), startDate, endDate,
   /// contactNumber (@NotBlank), contactEmail (@NotBlank @Email), remarks (optional)
+  @override
   Future<Map<String, dynamic>> applyLeave({
     required String leaveType,
     required String startDate, // "yyyy-MM-dd"
@@ -59,6 +79,7 @@ class LeaveRemoteDataSource {
 
   /// GET /leaves/my-leaves
   /// Returns List<LeaveResponse> directly — no pagination wrapper.
+  @override
   Future<List<dynamic>> getMyLeaves() async {
     try {
       final response = await dioClient.dio.get(ApiConstants.myLeaves);
@@ -73,6 +94,7 @@ class LeaveRemoteDataSource {
 
   /// GET /leaves/pending
   /// Returns List<LeaveResponse> directly — no wrapper.
+  @override
   Future<List<dynamic>> getPendingLeaves() async {
     try {
       final response = await dioClient.dio.get(ApiConstants.pendingLeaves);
@@ -86,6 +108,7 @@ class LeaveRemoteDataSource {
 
   /// PATCH /leaves/{id}/approve
   /// No request body needed — backend sets status to APPROVED directly.
+  @override
   Future<void> approveLeave({required String leaveId}) async {
     try {
       await dioClient.dio.patch(
@@ -101,6 +124,7 @@ class LeaveRemoteDataSource {
   /// PATCH /leaves/{id}/reject
   /// Body: ActionLeaveRequest { status: "REJECTED", actionRemarks: "..." }
   /// actionRemarks is optional but should be provided for transparency.
+  @override
   Future<void> rejectLeave({
     required String leaveId,
     required String actionRemarks,

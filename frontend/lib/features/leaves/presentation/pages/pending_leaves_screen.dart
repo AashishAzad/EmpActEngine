@@ -19,15 +19,19 @@ import '../../data/datasources/leave_remote_data_source.dart';
 /// Reject:  PATCH /leaves/{id}/reject  (body: ActionLeaveRequest { status, actionRemarks })
 
 class PendingLeavesScreen extends StatefulWidget {
-  const PendingLeavesScreen({super.key});
+  PendingLeavesScreen({
+    super.key,
+    LeaveDataSource? dataSource,
+  }) : dataSource = dataSource ??
+            LeaveRemoteDataSource(dioClient: DioClient());
+
+  final LeaveDataSource dataSource;
 
   @override
   State<PendingLeavesScreen> createState() => _PendingLeavesScreenState();
 }
 
 class _PendingLeavesScreenState extends State<PendingLeavesScreen> {
-  final _dataSource = LeaveRemoteDataSource(dioClient: DioClient());
-
   bool _isLoading = false;
   List<Map<String, dynamic>> _pendingLeaves = [];
 
@@ -41,7 +45,7 @@ class _PendingLeavesScreenState extends State<PendingLeavesScreen> {
     setState(() => _isLoading = true);
     try {
       // GET /leaves/pending → List<LeaveResponse> directly
-      final raw = await _dataSource.getPendingLeaves();
+      final raw = await widget.dataSource.getPendingLeaves();
       setState(() {
         _pendingLeaves = raw.cast<Map<String, dynamic>>();
         _isLoading = false;
@@ -62,7 +66,7 @@ class _PendingLeavesScreenState extends State<PendingLeavesScreen> {
   Future<void> _approveLeave(String id) async {
     try {
       // PATCH /leaves/{id}/approve — no body needed
-      await _dataSource.approveLeave(leaveId: id);
+      await widget.dataSource.approveLeave(leaveId: id);
 
       setState(() {
         _pendingLeaves.removeWhere((leave) => leave['id'].toString() == id);
@@ -95,7 +99,7 @@ class _PendingLeavesScreenState extends State<PendingLeavesScreen> {
     try {
       // PATCH /leaves/{id}/reject
       // Body: ActionLeaveRequest { status: "REJECTED", actionRemarks: "..." }
-      await _dataSource.rejectLeave(
+      await widget.dataSource.rejectLeave(
         leaveId: id,
         actionRemarks: actionRemarks,
       );

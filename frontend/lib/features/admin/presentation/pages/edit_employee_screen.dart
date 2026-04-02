@@ -18,11 +18,39 @@ import '../../../admin/data/datasources/admin_employee_data_source.dart';
 
 class EditEmployeeScreen extends StatefulWidget {
   final String employeeId; // UUID 'id' from the employee record
+  final AdminEmployeeSource dataSource;
+  final Future<DateTime?> Function(
+    BuildContext context,
+    DateTime? initialDate,
+  ) datePicker;
 
-  const EditEmployeeScreen({
+  EditEmployeeScreen({
     super.key,
     required this.employeeId,
-  });
+    AdminEmployeeSource? dataSource,
+    Future<DateTime?> Function(BuildContext context, DateTime? initialDate)?
+        datePicker,
+  })  : dataSource = dataSource ?? AdminEmployeeDataSource(dioClient: DioClient()),
+        datePicker = datePicker ?? _defaultDatePicker;
+
+  static Future<DateTime?> _defaultDatePicker(
+    BuildContext context,
+    DateTime? initialDate,
+  ) {
+    return showDatePicker(
+      context: context,
+      initialDate: initialDate ?? DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime.now(),
+      builder: (context, child) => Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme:
+              const ColorScheme.light(primary: AppColors.primary),
+        ),
+        child: child!,
+      ),
+    );
+  }
 
   @override
   State<EditEmployeeScreen> createState() => _EditEmployeeScreenState();
@@ -30,7 +58,6 @@ class EditEmployeeScreen extends StatefulWidget {
 
 class _EditEmployeeScreenState extends State<EditEmployeeScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _dataSource = AdminEmployeeDataSource(dioClient: DioClient());
 
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
@@ -68,7 +95,7 @@ class _EditEmployeeScreenState extends State<EditEmployeeScreen> {
     setState(() => _isLoadingEmployee = true);
     try {
       final employee =
-      await _dataSource.getEmployeeById(widget.employeeId);
+      await widget.dataSource.getEmployeeById(widget.employeeId);
       setState(() {
         _employee = employee;
         _firstNameController.text =
@@ -106,19 +133,7 @@ class _EditEmployeeScreenState extends State<EditEmployeeScreen> {
   }
 
   Future<void> _selectDate() async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _dateOfJoining ?? DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime.now(),
-      builder: (context, child) => Theme(
-        data: Theme.of(context).copyWith(
-          colorScheme:
-          const ColorScheme.light(primary: AppColors.primary),
-        ),
-        child: child!,
-      ),
-    );
+    final picked = await widget.datePicker(context, _dateOfJoining);
     if (picked != null) setState(() => _dateOfJoining = picked);
   }
 
@@ -127,7 +142,7 @@ class _EditEmployeeScreenState extends State<EditEmployeeScreen> {
 
     setState(() => _isLoading = true);
     try {
-      await _dataSource.updateEmployee(
+      await widget.dataSource.updateEmployee(
         id: widget.employeeId,
         firstName: _firstNameController.text,
         lastName: _lastNameController.text,

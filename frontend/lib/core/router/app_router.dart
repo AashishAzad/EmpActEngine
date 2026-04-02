@@ -91,7 +91,7 @@ class AppRouter {
       GoRoute(
         path: '/home',
         name: 'home',
-        builder: (context, state) => const RoleBasedHomeWrapper(), // ✅ CHANGED: Role-based routing
+        builder: (context, state) => RoleBasedHomeWrapper(), // ✅ CHANGED: Role-based routing
         routes: [
           // Home nested routes can go here
         ],
@@ -101,29 +101,29 @@ class AppRouter {
       GoRoute(
         path: '/attendance/mark',
         name: 'mark-attendance',
-        builder: (context, state) => const MarkAttendanceScreen(),
+        builder: (context, state) => MarkAttendanceScreen(),
       ),
       GoRoute(
         path: '/attendance/history',
         name: 'attendance-history',
-        builder: (context, state) => const AttendanceHistoryScreen(),
+        builder: (context, state) => AttendanceHistoryScreen(),
       ),
       GoRoute(
         path: '/attendance/manual-request',
         name: 'manual-attendance-request',
-        builder: (context, state) => const ManualAttendanceRequestScreen(),
+        builder: (context, state) => ManualAttendanceRequestScreen(),
       ),
 
       // ========== LEAVES ==========
       GoRoute(
         path: '/leaves/apply',
         name: 'apply-leave',
-        builder: (context, state) => const ApplyLeaveScreen(),
+        builder: (context, state) => ApplyLeaveScreen(),
       ),
       GoRoute(
         path: '/leaves/history',
         name: 'leave-history',
-        builder: (context, state) => const LeaveHistoryScreen(),
+        builder: (context, state) => LeaveHistoryScreen(),
       ),
       GoRoute(
         path: '/leaves/balance',
@@ -133,19 +133,19 @@ class AppRouter {
       GoRoute(
         path: '/leaves/pending',
         name: 'pending-leaves',
-        builder: (context, state) => const PendingLeavesScreen(),
+        builder: (context, state) => PendingLeavesScreen(),
       ),
 
       // ========== PAYROLL ==========
       GoRoute(
         path: '/payroll/salary',
         name: 'my-salary',
-        builder: (context, state) => const MySalaryScreen(),
+        builder: (context, state) => MySalaryScreen(),
       ),
       GoRoute(
         path: '/payroll/payslips',
         name: 'payslips',
-        builder: (context, state) => const PayslipsScreen(),
+        builder: (context, state) => PayslipsScreen(),
       ),
       GoRoute(
         path: '/payroll/payslips/:id',
@@ -160,7 +160,7 @@ class AppRouter {
       GoRoute(
         path: '/notifications',
         name: 'notifications',
-        builder: (context, state) => const NotificationsScreen(),
+        builder: (context, state) => NotificationsScreen(),
       ),
 
       // ========== LETTERS ==========
@@ -172,7 +172,7 @@ class AppRouter {
       GoRoute(
         path: '/letters/my-requests',
         name: 'my-letter-requests',
-        builder: (context, state) => const MyLetterRequestsScreen(),
+        builder: (context, state) => MyLetterRequestsScreen(),
       ),
 
       // ========== PROFILE ==========
@@ -203,12 +203,12 @@ class AppRouter {
       GoRoute(
         path: '/admin/generate-notification',
         name: 'admin-generate-notification',
-        builder: (context, state) => const GenerateNotificationScreen(),
+        builder: (context, state) => GenerateNotificationScreen(),
       ),
       GoRoute(
         path: '/admin/add-employee',
         name: 'admin-add-employee',
-        builder: (context, state) => const AddEmployeeScreen(),
+        builder: (context, state) => AddEmployeeScreen(),
       ),
       GoRoute(
         path: '/admin/edit-employee/:id',
@@ -221,27 +221,27 @@ class AppRouter {
       GoRoute(
         path: '/admin/pending-leaves',
         name: 'admin-pending-leaves',
-        builder: (context, state) => const AdminPendingLeavesScreen(),
+        builder: (context, state) => AdminPendingLeavesScreen(),
       ),
       GoRoute(
         path: '/admin/pending-letters',
         name: 'admin-pending-letters',
-        builder: (context, state) => const AdminPendingLettersScreen(),
+        builder: (context, state) => AdminPendingLettersScreen(),
       ),
       GoRoute(
         path: '/admin/company',
         name: 'admin-company',
-        builder: (context, state) => const CompanyScreen(),
+        builder: (context, state) => CompanyScreen(),
       ),
       GoRoute(
         path: '/admin/correction',
         name: 'admin-correction',
-        builder: (context, state) => const CorrectionScreen(),
+        builder: (context, state) => CorrectionScreen(),
       ),
       GoRoute(
         path: '/admin/generator',
         name: 'admin-generator',
-        builder: (context, state) => const GeneratorScreen(),
+        builder: (context, state) => GeneratorScreen(),
       ),
       ],
       errorBuilder: (context, state) => const ErrorScreen(),

@@ -14,7 +14,18 @@ import 'generator_screen.dart';
 /// - Generator (Payslips & Letters)
 
 class AdminHomeWrapper extends StatefulWidget {
-  const AdminHomeWrapper({super.key});
+  AdminHomeWrapper({
+    super.key,
+    List<Widget>? pages,
+  }) : pages = pages ??
+            [
+              AdminHomeScreen(),
+              CorrectionScreen(),
+              CompanyScreen(),
+              GeneratorScreen(),
+            ];
+
+  final List<Widget> pages;
 
   @override
   State<AdminHomeWrapper> createState() => _AdminHomeWrapperState();
@@ -23,13 +34,6 @@ class AdminHomeWrapper extends StatefulWidget {
 class _AdminHomeWrapperState extends State<AdminHomeWrapper> {
   int _currentIndex = 0;
 
-  final List<Widget> _pages = const [
-    AdminHomeScreen(),
-    CorrectionScreen(),
-    CompanyScreen(),
-    GeneratorScreen(),
-  ];
-
   @override
   Widget build(BuildContext context) {
     // ✅ FIXED: Use only the current page's Scaffold (no wrapper Scaffold)
@@ -37,7 +41,7 @@ class _AdminHomeWrapperState extends State<AdminHomeWrapper> {
     return Stack(
       children: [
         // Show current page
-        _pages[_currentIndex],
+        widget.pages[_currentIndex],
 
         // Bottom navigation bar overlay
         Positioned(

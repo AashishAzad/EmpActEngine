@@ -11,7 +11,16 @@ import '../../../../features/auth/presentation/bloc/auth_state.dart';
 import 'package:dio/dio.dart';
 
 class ChangePasswordScreen extends StatefulWidget {
-  const ChangePasswordScreen({super.key});
+  const ChangePasswordScreen({
+    super.key,
+    this.onChangePassword,
+  });
+
+  final Future<void> Function({
+    required String currentPassword,
+    required String newPassword,
+    required String confirmPassword,
+  })? onChangePassword;
 
   @override
   State<ChangePasswordScreen> createState() => _ChangePasswordScreenState();
@@ -39,15 +48,24 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final dioClient = DioClient();
-      await dioClient.dio.patch(
-        '/auth/change-password',
-        data: {
-          'currentPassword': _currentPasswordController.text,
-          'newPassword': _newPasswordController.text,
-          'confirmPassword': _confirmPasswordController.text,
-        },
-      );
+      final changePassword = widget.onChangePassword;
+      if (changePassword != null) {
+        await changePassword(
+          currentPassword: _currentPasswordController.text,
+          newPassword: _newPasswordController.text,
+          confirmPassword: _confirmPasswordController.text,
+        );
+      } else {
+        final dioClient = DioClient();
+        await dioClient.dio.patch(
+          '/auth/change-password',
+          data: {
+            'currentPassword': _currentPasswordController.text,
+            'newPassword': _newPasswordController.text,
+            'confirmPassword': _confirmPasswordController.text,
+          },
+        );
+      }
 
       if (!mounted) return;
 

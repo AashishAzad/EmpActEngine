@@ -25,15 +25,20 @@ import '../../data/datasources/payroll_remote_data_source.dart';
 class PayslipDetailScreen extends StatefulWidget {
   final String payslipId;
 
-  const PayslipDetailScreen({super.key, required this.payslipId});
+  PayslipDetailScreen({
+    super.key,
+    required this.payslipId,
+    PayrollDataSource? dataSource,
+  }) : dataSource = dataSource ??
+            PayrollRemoteDataSource(dioClient: DioClient());
+
+  final PayrollDataSource dataSource;
 
   @override
   State<PayslipDetailScreen> createState() => _PayslipDetailScreenState();
 }
 
 class _PayslipDetailScreenState extends State<PayslipDetailScreen> {
-  final _dataSource = PayrollRemoteDataSource(dioClient: DioClient());
-
   bool _isLoading = false;
   bool _isDownloading = false;
   Map<String, dynamic>? _payslip;
@@ -51,7 +56,7 @@ class _PayslipDetailScreenState extends State<PayslipDetailScreen> {
       _errorMessage = null;
     });
     try {
-      final data = await _dataSource.getPayslipById(widget.payslipId);
+      final data = await widget.dataSource.getPayslipById(widget.payslipId);
       setState(() {
         _payslip = data;
         _isLoading = false;
@@ -67,7 +72,7 @@ class _PayslipDetailScreenState extends State<PayslipDetailScreen> {
   Future<void> _downloadPayslip() async {
     setState(() => _isDownloading = true);
     try {
-      final bytes = await _dataSource.downloadPayslip(widget.payslipId);
+      final bytes = await widget.dataSource.downloadPayslip(widget.payslipId);
       final dir = await getApplicationDocumentsDirectory();
       final month = _getInt('month');
       final year = _getInt('year');

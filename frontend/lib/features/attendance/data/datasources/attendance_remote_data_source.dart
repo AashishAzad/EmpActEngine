@@ -14,7 +14,32 @@ import '../../../../core/network/dio_client.dart';
 /// GET  /attendance/summary?month=&year=        → AttendanceSummaryResponse
 /// POST /attendance/manual-request              → ManualAttendanceRequestResponse (201)
 
-class AttendanceRemoteDataSource {
+abstract class AttendanceDataSource {
+  Future<Map<String, dynamic>> markAttendance({
+    required double latitude,
+    required double longitude,
+    required String address,
+  });
+
+  Future<Map<String, dynamic>> getTodayAttendance();
+
+  Future<List<dynamic>> getAttendanceHistory({
+    int? month,
+    int? year,
+  });
+
+  Future<Map<String, dynamic>> getAttendanceSummary({
+    required int month,
+    required int year,
+  });
+
+  Future<Map<String, dynamic>> requestManualAttendance({
+    required DateTime date,
+    required String reason,
+  });
+}
+
+class AttendanceRemoteDataSource implements AttendanceDataSource {
   final DioClient dioClient;
 
   AttendanceRemoteDataSource({required this.dioClient});

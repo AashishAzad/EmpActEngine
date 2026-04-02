@@ -8,6 +8,18 @@ import '../../../../shared/widgets/empty_state.dart';
 import '../../../../shared/widgets/loading_indicator.dart';
 import '../../../admin/data/datasources/admin_payroll_data_source.dart';
 
+class SelectedPdfFile {
+  const SelectedPdfFile({
+    required this.path,
+    required this.name,
+  });
+
+  final String path;
+  final String name;
+}
+
+typedef PickPdfFile = Future<SelectedPdfFile?> Function();
+
 /// Admin Pending Letters Screen
 ///
 /// Shows pending letter requests with PDF upload option.
@@ -15,7 +27,31 @@ import '../../../admin/data/datasources/admin_payroll_data_source.dart';
 /// POST /letters/{id}/upload      → multipart/form-data with 'file' field
 
 class AdminPendingLettersScreen extends StatefulWidget {
-  const AdminPendingLettersScreen({super.key});
+  AdminPendingLettersScreen({
+    super.key,
+    AdminPayrollSource? dataSource,
+    PickPdfFile? pickPdfFile,
+  })  : dataSource = dataSource ?? AdminPayrollDataSource(dioClient: DioClient()),
+        pickPdfFile = pickPdfFile ?? _defaultPickPdfFile;
+
+  final AdminPayrollSource dataSource;
+  final PickPdfFile pickPdfFile;
+
+  static Future<SelectedPdfFile?> _defaultPickPdfFile() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['pdf'],
+    );
+
+    if (result == null || result.files.single.path == null) {
+      return null;
+    }
+
+    return SelectedPdfFile(
+      path: result.files.single.path!,
+      name: result.files.single.name,
+    );
+  }
 
   @override
   State<AdminPendingLettersScreen> createState() =>
@@ -24,8 +60,6 @@ class AdminPendingLettersScreen extends StatefulWidget {
 
 class _AdminPendingLettersScreenState
     extends State<AdminPendingLettersScreen> {
-  final _dataSource = AdminPayrollDataSource(dioClient: DioClient());
-
   bool _isLoading = false;
   List<dynamic> _pendingLetters = [];
 
@@ -38,7 +72,7 @@ class _AdminPendingLettersScreenState
   Future<void> _loadPendingLetters() async {
     setState(() => _isLoading = true);
     try {
-      final letters = await _dataSource.getPendingLetterRequests();
+      final letters = await widget.dataSource.getPendingLetterRequests();
       setState(() {
         _pendingLetters = letters;
         _isLoading = false;
@@ -60,15 +94,11 @@ class _AdminPendingLettersScreenState
       String requestId, String employeeName) async {
     // Backend POST /letters/{id}/upload expects multipart PDF
     // Only allow PDF — backend serves with APPLICATION_PDF content type
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['pdf'],
-    );
+    final selectedFile = await widget.pickPdfFile();
+    if (selectedFile == null) return;
 
-    if (result == null || result.files.single.path == null) return;
-
-    final filePath = result.files.single.path!;
-    final fileName = result.files.single.name;
+    final filePath = selectedFile.path;
+    final fileName = selectedFile.name;
 
     final confirm = await showDialog<bool>(
       context: context,
@@ -111,7 +141,7 @@ class _AdminPendingLettersScreenState
     }
 
     try {
-      await _dataSource.uploadLetter(
+      await widget.dataSource.uploadLetter(
         requestId: requestId,
         filePath: filePath,
       );

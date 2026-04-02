@@ -20,7 +20,12 @@ import '../../data/datasources/attendance_remote_data_source.dart';
 /// createdAt
 
 class AttendanceHistoryScreen extends StatefulWidget {
-  const AttendanceHistoryScreen({super.key});
+  AttendanceHistoryScreen({
+    super.key,
+    AttendanceDataSource? dataSource,
+  }) : dataSource = dataSource ?? AttendanceRemoteDataSource(dioClient: DioClient());
+
+  final AttendanceDataSource dataSource;
 
   @override
   State<AttendanceHistoryScreen> createState() =>
@@ -28,8 +33,6 @@ class AttendanceHistoryScreen extends StatefulWidget {
 }
 
 class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
-  final _dataSource = AttendanceRemoteDataSource(dioClient: DioClient());
-
   DateTime _selectedMonth = DateTime.now();
   bool _isLoading = false;
   List<Map<String, dynamic>> _attendanceRecords = [];
@@ -44,7 +47,7 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
     setState(() => _isLoading = true);
     try {
       // GET /attendance/my-attendance → List<AttendanceResponse> directly
-      final raw = await _dataSource.getAttendanceHistory(
+      final raw = await widget.dataSource.getAttendanceHistory(
         month: _selectedMonth.month,
         year: _selectedMonth.year,
       );

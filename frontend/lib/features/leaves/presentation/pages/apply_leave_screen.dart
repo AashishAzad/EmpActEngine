@@ -21,7 +21,53 @@ import '../../data/datasources/leave_remote_data_source.dart';
 /// leaveType, startDate, endDate, contactNumber (@NotBlank), contactEmail, remarks
 
 class ApplyLeaveScreen extends StatefulWidget {
-  const ApplyLeaveScreen({super.key});
+  ApplyLeaveScreen({
+    super.key,
+    LeaveDataSource? dataSource,
+    Future<DateTime?> Function(BuildContext context)? startDatePicker,
+    Future<DateTime?> Function(BuildContext context, DateTime startDate)?
+        endDatePicker,
+  })  : dataSource = dataSource ?? LeaveRemoteDataSource(dioClient: DioClient()),
+        startDatePicker = startDatePicker ?? _defaultStartDatePicker,
+        endDatePicker = endDatePicker ?? _defaultEndDatePicker;
+
+  final LeaveDataSource dataSource;
+  final Future<DateTime?> Function(BuildContext context) startDatePicker;
+  final Future<DateTime?> Function(BuildContext context, DateTime startDate)
+      endDatePicker;
+
+  static Future<DateTime?> _defaultStartDatePicker(BuildContext context) {
+    return showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+      builder: (context, child) => Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme: const ColorScheme.light(primary: AppColors.primary),
+        ),
+        child: child!,
+      ),
+    );
+  }
+
+  static Future<DateTime?> _defaultEndDatePicker(
+    BuildContext context,
+    DateTime startDate,
+  ) {
+    return showDatePicker(
+      context: context,
+      initialDate: startDate,
+      firstDate: startDate,
+      lastDate: startDate.add(const Duration(days: 90)),
+      builder: (context, child) => Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme: const ColorScheme.light(primary: AppColors.primary),
+        ),
+        child: child!,
+      ),
+    );
+  }
 
   @override
   State<ApplyLeaveScreen> createState() => _ApplyLeaveScreenState();
@@ -31,7 +77,6 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
   final _formKey = GlobalKey<FormState>();
   final _remarksController = TextEditingController();
   final _contactNumberController = TextEditingController();
-  final _dataSource = LeaveRemoteDataSource(dioClient: DioClient());
 
   String? _selectedLeaveType;
   DateTime? _startDate;
@@ -56,19 +101,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
   }
 
   Future<void> _selectStartDate() async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
-      builder: (context, child) => Theme(
-        data: Theme.of(context).copyWith(
-          colorScheme:
-          const ColorScheme.light(primary: AppColors.primary),
-        ),
-        child: child!,
-      ),
-    );
+    final picked = await widget.startDatePicker(context);
     if (picked != null) {
       setState(() {
         _startDate = picked;
@@ -89,19 +122,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
       );
       return;
     }
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _startDate!,
-      firstDate: _startDate!,
-      lastDate: _startDate!.add(const Duration(days: 90)),
-      builder: (context, child) => Theme(
-        data: Theme.of(context).copyWith(
-          colorScheme:
-          const ColorScheme.light(primary: AppColors.primary),
-        ),
-        child: child!,
-      ),
-    );
+    final picked = await widget.endDatePicker(context, _startDate!);
     if (picked != null) setState(() => _endDate = picked);
   }
 
@@ -142,7 +163,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
           ? _contactNumberController.text.trim()
           : 'N/A'; // edge case: user has no phone number saved
 
-      await _dataSource.applyLeave(
+      await widget.dataSource.applyLeave(
         leaveType: _selectedLeaveType!,
         startDate: DateFormat('yyyy-MM-dd').format(_startDate!),
         endDate: DateFormat('yyyy-MM-dd').format(_endDate!),

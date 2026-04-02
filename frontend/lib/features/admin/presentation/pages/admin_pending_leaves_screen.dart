@@ -17,7 +17,12 @@ import '../../../leaves/data/datasources/leave_remote_data_source.dart';
 /// PATCH /leaves/{id}/reject     → ActionLeaveRequest { status, actionRemarks }
 
 class AdminPendingLeavesScreen extends StatefulWidget {
-  const AdminPendingLeavesScreen({super.key});
+  AdminPendingLeavesScreen({
+    super.key,
+    LeaveDataSource? dataSource,
+  }) : dataSource = dataSource ?? LeaveRemoteDataSource(dioClient: DioClient());
+
+  final LeaveDataSource dataSource;
 
   @override
   State<AdminPendingLeavesScreen> createState() =>
@@ -26,8 +31,6 @@ class AdminPendingLeavesScreen extends StatefulWidget {
 
 class _AdminPendingLeavesScreenState
     extends State<AdminPendingLeavesScreen> {
-  final _dataSource = LeaveRemoteDataSource(dioClient: DioClient());
-
   bool _isLoading = false;
   List<dynamic> _pendingLeaves = [];
 
@@ -40,7 +43,7 @@ class _AdminPendingLeavesScreenState
   Future<void> _loadPendingLeaves() async {
     setState(() => _isLoading = true);
     try {
-      final leaves = await _dataSource.getPendingLeaves();
+      final leaves = await widget.dataSource.getPendingLeaves();
       setState(() {
         _pendingLeaves = leaves;
         _isLoading = false;
@@ -79,7 +82,7 @@ class _AdminPendingLeavesScreenState
     if (confirm != true) return;
 
     try {
-      await _dataSource.approveLeave(leaveId: leaveId);
+      await widget.dataSource.approveLeave(leaveId: leaveId);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -151,7 +154,7 @@ class _AdminPendingLeavesScreenState
 
     try {
       // rejectLeave expects 'actionRemarks' (from ActionLeaveRequest)
-      await _dataSource.rejectLeave(
+      await widget.dataSource.rejectLeave(
         leaveId: leaveId,
         actionRemarks: reasonController.text.trim(),
       );

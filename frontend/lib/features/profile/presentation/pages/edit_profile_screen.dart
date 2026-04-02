@@ -26,8 +26,14 @@ class EditProfileScreen extends StatefulWidget {
   /// Optional — if null, edits the currently logged-in user (admin editing own profile).
   /// Pass a specific employeeId UUID string to edit another employee.
   final String? targetUserId;
+  final Future<void> Function(String targetId, Map<String, dynamic> data)?
+      onUpdateProfile;
 
-  const EditProfileScreen({super.key, this.targetUserId});
+  const EditProfileScreen({
+    super.key,
+    this.targetUserId,
+    this.onUpdateProfile,
+  });
 
   @override
   State<EditProfileScreen> createState() => _EditProfileScreenState();
@@ -86,8 +92,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final dioClient = DioClient();
-
       // Target: either a specific employee or the logged-in admin themselves
       final String targetId = widget.targetUserId ?? user.id;
 
@@ -140,10 +144,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       }
 
       // PATCH /employees/{id} — Admin only
-      await dioClient.dio.patch(
-        ApiConstants.employeeById(targetId),
-        data: data,
-      );
+      final updateProfile = widget.onUpdateProfile;
+      if (updateProfile != null) {
+        await updateProfile(targetId, data);
+      } else {
+        final dioClient = DioClient();
+        await dioClient.dio.patch(
+          ApiConstants.employeeById(targetId),
+          data: data,
+        );
+      }
 
       if (mounted) {
         // If admin edited their own profile, refresh AuthBloc

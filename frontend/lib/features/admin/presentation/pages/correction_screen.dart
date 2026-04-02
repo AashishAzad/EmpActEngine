@@ -13,14 +13,18 @@ import '../../../admin/data/datasources/admin_employee_data_source.dart';
 /// GET /employees → PagedResponse<EmployeeResponse> (data array)
 
 class CorrectionScreen extends StatefulWidget {
-  const CorrectionScreen({super.key});
+  CorrectionScreen({
+    super.key,
+    AdminEmployeeSource? dataSource,
+  }) : dataSource = dataSource ?? AdminEmployeeDataSource(dioClient: DioClient());
+
+  final AdminEmployeeSource dataSource;
 
   @override
   State<CorrectionScreen> createState() => _CorrectionScreenState();
 }
 
 class _CorrectionScreenState extends State<CorrectionScreen> {
-  final _dataSource = AdminEmployeeDataSource(dioClient: DioClient());
   final _searchController = TextEditingController();
 
   bool _isLoading = false;
@@ -42,7 +46,7 @@ class _CorrectionScreenState extends State<CorrectionScreen> {
   Future<void> _loadEmployees() async {
     setState(() => _isLoading = true);
     try {
-      final employees = await _dataSource.getAllEmployees();
+      final employees = await widget.dataSource.getAllEmployees();
       setState(() {
         _employees = employees
             .where((emp) => emp['status'] != 'TERMINATED')

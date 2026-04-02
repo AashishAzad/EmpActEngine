@@ -12,7 +12,15 @@ import '../../features/admin/presentation/pages/admin_home_wrapper.dart';
 /// - EMPLOYEE → Employee Home with bottom navigation
 
 class RoleBasedHomeWrapper extends StatelessWidget {
-  const RoleBasedHomeWrapper({super.key});
+  RoleBasedHomeWrapper({
+    super.key,
+    Widget? adminHome,
+    Widget? employeeHome,
+  })  : adminHome = adminHome ?? AdminHomeWrapper(),
+        employeeHome = employeeHome ?? HomeScreen();
+
+  final Widget adminHome;
+  final Widget employeeHome;
 
   @override
   Widget build(BuildContext context) {
@@ -24,11 +32,11 @@ class RoleBasedHomeWrapper extends StatelessWidget {
           // ✅ FIXED: Only ADMIN sees admin screens, MANAGER sees employee screens
           if (user.role == 'ADMIN') {
             // Show Admin Home with Admin Bottom Navigation
-            return const AdminHomeWrapper();
+            return adminHome;
           }
 
           // Show Employee Home with Employee Bottom Navigation (for both EMPLOYEE and MANAGER)
-          return const HomeScreen();
+          return employeeHome;
         }
 
         // If not authenticated, this shouldn't happen

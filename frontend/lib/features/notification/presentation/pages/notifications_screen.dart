@@ -19,7 +19,13 @@ import '../../data/datasources/notification_remote_data_source.dart';
 /// isRead, readAt
 
 class NotificationsScreen extends StatefulWidget {
-  const NotificationsScreen({super.key});
+  NotificationsScreen({
+    super.key,
+    NotificationDataSource? dataSource,
+  }) : dataSource = dataSource ??
+            NotificationRemoteDataSource(dioClient: DioClient());
+
+  final NotificationDataSource dataSource;
 
   @override
   State<NotificationsScreen> createState() => _NotificationsScreenState();
@@ -27,7 +33,6 @@ class NotificationsScreen extends StatefulWidget {
 
 class _NotificationsScreenState extends State<NotificationsScreen> {
   // Use direct datasource — consistent with other feature screens
-  final _dataSource = NotificationRemoteDataSource(dioClient: DioClient());
 
   bool _isLoading = false;
   List<Map<String, dynamic>> _notifications = [];
@@ -44,7 +49,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
     try {
       // GET /notifications — returns List<NotificationResponse> directly
-      final raw = await _dataSource.getNotifications();
+      final raw = await widget.dataSource.getNotifications();
       setState(() {
         _notifications = raw.cast<Map<String, dynamic>>();
         _isLoading = false;
@@ -84,7 +89,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
     try {
       // PATCH /notifications/{id}/read
-      await _dataSource.markAsRead(id);
+      await widget.dataSource.markAsRead(id);
 
       // Optimistically update local state
       setState(() {

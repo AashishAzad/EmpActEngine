@@ -11,7 +11,17 @@ import '../../../../core/network/dio_client.dart';
 /// GET  /letters/my-requests       → List<LetterRequestResponse> (plain list, no pagination)
 /// GET  /letters/{id}/download     → PDF bytes (streamed, auth required)
 
-class LetterRemoteDataSource {
+abstract class LetterDataSource {
+  Future<Map<String, dynamic>> requestLetter({
+    required String letterType,
+    String? remarks,
+  });
+
+  Future<List<dynamic>> getMyLetterRequests();
+  Future<List<int>> downloadLetter(String id);
+}
+
+class LetterRemoteDataSource implements LetterDataSource {
   final DioClient dioClient;
 
   LetterRemoteDataSource({required this.dioClient});

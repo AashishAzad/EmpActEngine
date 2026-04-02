@@ -15,7 +15,19 @@ import '../../../../core/network/dio_client.dart';
 /// NOTE: There is NO markAllAsRead endpoint in the backend.
 /// That feature has been removed from the data source.
 
-class NotificationRemoteDataSource {
+abstract class NotificationDataSource {
+  Future<List<dynamic>> getNotifications({
+    bool unreadOnly = false,
+    bool includeExpired = false,
+    String? type,
+  });
+
+  Future<int> getUnreadCount();
+  Future<Map<String, dynamic>> markAsRead(String id);
+  Future<void> deleteNotification(String id);
+}
+
+class NotificationRemoteDataSource implements NotificationDataSource {
   final DioClient dioClient;
 
   NotificationRemoteDataSource({required this.dioClient});
@@ -24,6 +36,7 @@ class NotificationRemoteDataSource {
 
   /// GET /notifications?unreadOnly=false&includeExpired=false&type=
   /// Returns List<NotificationResponse> directly — no pagination wrapper.
+  @override
   Future<List<dynamic>> getNotifications({
     bool unreadOnly = false,
     bool includeExpired = false,
@@ -49,6 +62,7 @@ class NotificationRemoteDataSource {
 
   /// GET /notifications/unread-count
   /// Returns { "count": Long } — key is "count", value is a number
+  @override
   Future<int> getUnreadCount() async {
     try {
       final response = await dioClient.dio.get(ApiConstants.unreadCount);
@@ -63,6 +77,7 @@ class NotificationRemoteDataSource {
 
   /// PATCH /notifications/{id}/read
   /// Returns updated NotificationResponse
+  @override
   Future<Map<String, dynamic>> markAsRead(String id) async {
     try {
       final response = await dioClient.dio.patch(
@@ -78,6 +93,7 @@ class NotificationRemoteDataSource {
 
   /// DELETE /notifications/{id}
   /// Admin only — returns { "message": "..." }
+  @override
   Future<void> deleteNotification(String id) async {
     try {
       await dioClient.dio.delete(ApiConstants.deleteNotification(id));

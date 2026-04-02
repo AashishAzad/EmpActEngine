@@ -20,15 +20,41 @@ import '../../data/datasources/letter_remote_data_source.dart';
 /// remarks, fileUrl, createdAt, updatedAt, completedAt
 
 class MyLetterRequestsScreen extends StatefulWidget {
-  const MyLetterRequestsScreen({super.key});
+  MyLetterRequestsScreen({
+    super.key,
+    LetterDataSource? dataSource,
+    Future<String> Function(String id, String letterType, List<int> bytes)?
+        saveLetter,
+    Future<void> Function(String path)? openLetter,
+  })  : dataSource = dataSource ?? LetterRemoteDataSource(dioClient: DioClient()),
+        saveLetter = saveLetter ?? _defaultSaveLetter,
+        openLetter = openLetter ?? _defaultOpenLetter;
+
+  final LetterDataSource dataSource;
+  final Future<String> Function(String id, String letterType, List<int> bytes)
+      saveLetter;
+  final Future<void> Function(String path) openLetter;
+
+  static Future<String> _defaultSaveLetter(
+    String id,
+    String letterType,
+    List<int> bytes,
+  ) async {
+    final dir = await getApplicationDocumentsDirectory();
+    final file = File('${dir.path}/letter_${letterType}_$id.pdf');
+    await file.writeAsBytes(bytes);
+    return file.path;
+  }
+
+  static Future<void> _defaultOpenLetter(String path) async {
+    await OpenFile.open(path);
+  }
 
   @override
   State<MyLetterRequestsScreen> createState() => _MyLetterRequestsScreenState();
 }
 
 class _MyLetterRequestsScreenState extends State<MyLetterRequestsScreen> {
-  final _dataSource = LetterRemoteDataSource(dioClient: DioClient());
-
   bool _isLoading = false;
   List<Map<String, dynamic>> _letters = [];
   String? _downloadingId; // tracks which letter is being downloaded
@@ -42,7 +68,7 @@ class _MyLetterRequestsScreenState extends State<MyLetterRequestsScreen> {
   Future<void> _loadLetters() async {
     setState(() => _isLoading = true);
     try {
-      final raw = await _dataSource.getMyLetterRequests();
+      final raw = await widget.dataSource.getMyLetterRequests();
       setState(() {
         _letters = raw.cast<Map<String, dynamic>>();
         _isLoading = false;
@@ -66,11 +92,9 @@ class _MyLetterRequestsScreenState extends State<MyLetterRequestsScreen> {
   Future<void> _downloadLetter(String id, String letterType) async {
     setState(() => _downloadingId = id);
     try {
-      final bytes = await _dataSource.downloadLetter(id);
-      final dir = await getApplicationDocumentsDirectory();
-      final file = File('${dir.path}/letter_${letterType}_$id.pdf');
-      await file.writeAsBytes(bytes);
-      await OpenFile.open(file.path);
+      final bytes = await widget.dataSource.downloadLetter(id);
+      final path = await widget.saveLetter(id, letterType, bytes);
+      await widget.openLetter(path);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

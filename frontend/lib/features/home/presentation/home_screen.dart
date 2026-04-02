@@ -14,7 +14,18 @@ import '../../../core/theme/app_colors.dart';
 /// so no need to wrap the whole scaffold in one here.
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  HomeScreen({
+    super.key,
+    List<Widget>? pages,
+  }) : pages = pages ??
+            const [
+              DashboardPage(),
+              AttendancePage(),
+              LeavesPage(),
+              MorePage(),
+            ];
+
+  final List<Widget> pages;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -23,19 +34,12 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
 
-  final List<Widget> _pages = const [
-    DashboardPage(),
-    AttendancePage(),
-    LeavesPage(),
-    MorePage(),
-  ];
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: IndexedStack(
         index: _currentIndex,
-        children: _pages,
+        children: widget.pages,
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,

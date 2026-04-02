@@ -15,15 +15,19 @@ import '../../data/datasources/payroll_remote_data_source.dart';
 /// pf, professionalTax, otherDeductions, grossPay, netPay
 
 class MySalaryScreen extends StatefulWidget {
-  const MySalaryScreen({super.key});
+  MySalaryScreen({
+    super.key,
+    PayrollDataSource? dataSource,
+  }) : dataSource = dataSource ??
+            PayrollRemoteDataSource(dioClient: DioClient());
+
+  final PayrollDataSource dataSource;
 
   @override
   State<MySalaryScreen> createState() => _MySalaryScreenState();
 }
 
 class _MySalaryScreenState extends State<MySalaryScreen> {
-  final _dataSource = PayrollRemoteDataSource(dioClient: DioClient());
-
   bool _isLoading = false;
   Map<String, dynamic>? _salaryData;
   String? _errorMessage;
@@ -41,7 +45,7 @@ class _MySalaryScreenState extends State<MySalaryScreen> {
     });
 
     try {
-      final data = await _dataSource.getMySalary();
+      final data = await widget.dataSource.getMySalary();
       setState(() {
         _salaryData = data;
         _isLoading = false;

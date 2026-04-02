@@ -20,7 +20,31 @@ import '../../data/datasources/attendance_remote_data_source.dart';
 ///   reason (String, required)
 
 class ManualAttendanceRequestScreen extends StatefulWidget {
-  const ManualAttendanceRequestScreen({super.key});
+  ManualAttendanceRequestScreen({
+    super.key,
+    AttendanceDataSource? dataSource,
+    Future<DateTime?> Function(BuildContext context)? datePicker,
+  })  : dataSource = dataSource ?? AttendanceRemoteDataSource(dioClient: DioClient()),
+        datePicker = datePicker ?? _defaultDatePicker;
+
+  final AttendanceDataSource dataSource;
+  final Future<DateTime?> Function(BuildContext context) datePicker;
+
+  static Future<DateTime?> _defaultDatePicker(BuildContext context) {
+    return showDatePicker(
+      context: context,
+      initialDate: DateTime.now().subtract(const Duration(days: 1)),
+      firstDate: DateTime.now().subtract(const Duration(days: 30)),
+      lastDate: DateTime.now().subtract(const Duration(days: 1)),
+      builder: (context, child) => Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme:
+              const ColorScheme.light(primary: AppColors.primary),
+        ),
+        child: child!,
+      ),
+    );
+  }
 
   @override
   State<ManualAttendanceRequestScreen> createState() =>
@@ -31,7 +55,6 @@ class _ManualAttendanceRequestScreenState
     extends State<ManualAttendanceRequestScreen> {
   final _formKey = GlobalKey<FormState>();
   final _reasonController = TextEditingController();
-  final _dataSource = AttendanceRemoteDataSource(dioClient: DioClient());
 
   DateTime? _selectedDate;
   bool _isLoading = false;
@@ -43,20 +66,7 @@ class _ManualAttendanceRequestScreenState
   }
 
   Future<void> _selectDate() async {
-    final picked = await showDatePicker(
-      context: context,
-      // Can only request for past dates (not today, not future)
-      initialDate: DateTime.now().subtract(const Duration(days: 1)),
-      firstDate: DateTime.now().subtract(const Duration(days: 30)),
-      lastDate: DateTime.now().subtract(const Duration(days: 1)),
-      builder: (context, child) => Theme(
-        data: Theme.of(context).copyWith(
-          colorScheme:
-          const ColorScheme.light(primary: AppColors.primary),
-        ),
-        child: child!,
-      ),
-    );
+    final picked = await widget.datePicker(context);
     if (picked != null) setState(() => _selectedDate = picked);
   }
 
@@ -80,7 +90,7 @@ class _ManualAttendanceRequestScreenState
       // Body: { requestDate: "yyyy-MM-dd", reason: "..." }
       // NOTE: field name is "requestDate" (from ManualAttendanceRequest entity)
       // NOT "date" — date is formatted as LocalDate string, not full DateTime
-      await _dataSource.requestManualAttendance(
+      await widget.dataSource.requestManualAttendance(
         date: _selectedDate!,
         reason: _reasonController.text.trim(),
       );

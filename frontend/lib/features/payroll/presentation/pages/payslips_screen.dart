@@ -21,15 +21,19 @@ import '../../data/datasources/payroll_remote_data_source.dart';
 /// pdfUrl, isGenerated, generatedAt, createdAt, updatedAt
 
 class PayslipsScreen extends StatefulWidget {
-  const PayslipsScreen({super.key});
+  PayslipsScreen({
+    super.key,
+    PayrollDataSource? dataSource,
+  }) : dataSource = dataSource ??
+            PayrollRemoteDataSource(dioClient: DioClient());
+
+  final PayrollDataSource dataSource;
 
   @override
   State<PayslipsScreen> createState() => _PayslipsScreenState();
 }
 
 class _PayslipsScreenState extends State<PayslipsScreen> {
-  final _dataSource = PayrollRemoteDataSource(dioClient: DioClient());
-
   bool _isLoading = false;
   List<Map<String, dynamic>> _payslips = [];
   String? _errorMessage;
@@ -72,7 +76,7 @@ class _PayslipsScreenState extends State<PayslipsScreen> {
 
     try {
       // GET /payroll/my-payslips → PagedResponse<PayslipResponse>
-      final result = await _dataSource.getMyPayslips(page: 1);
+      final result = await widget.dataSource.getMyPayslips(page: 1);
 
       final data = result['data'] as List<dynamic>? ?? [];
       final totalPages = (result['totalPages'] as num?)?.toInt() ?? 1;
@@ -104,7 +108,7 @@ class _PayslipsScreenState extends State<PayslipsScreen> {
 
     try {
       final nextPage = _currentPage + 1;
-      final result = await _dataSource.getMyPayslips(page: nextPage);
+      final result = await widget.dataSource.getMyPayslips(page: nextPage);
       final data = result['data'] as List<dynamic>? ?? [];
 
       setState(() {

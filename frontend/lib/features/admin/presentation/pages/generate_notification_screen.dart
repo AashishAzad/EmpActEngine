@@ -21,7 +21,17 @@ import '../../../admin/data/datasources/admin_notification_data_source.dart';
 /// visibleTill (optional), referenceId (optional), referenceType (optional)
 
 class GenerateNotificationScreen extends StatefulWidget {
-  const GenerateNotificationScreen({super.key});
+  GenerateNotificationScreen({
+    super.key,
+    AdminEmployeeSource? employeeDataSource,
+    AdminNotificationSource? notificationDataSource,
+  })  : employeeDataSource =
+            employeeDataSource ?? AdminEmployeeDataSource(dioClient: DioClient()),
+        notificationDataSource = notificationDataSource ??
+            AdminNotificationDataSource(dioClient: DioClient());
+
+  final AdminEmployeeSource employeeDataSource;
+  final AdminNotificationSource notificationDataSource;
 
   @override
   State<GenerateNotificationScreen> createState() =>
@@ -33,10 +43,6 @@ class _GenerateNotificationScreenState
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _messageController = TextEditingController();
-  final _employeeDataSource =
-  AdminEmployeeDataSource(dioClient: DioClient());
-  final _notificationDataSource =
-  AdminNotificationDataSource(dioClient: DioClient());
 
   bool _isLoading = false;
   bool _isLoadingEmployees = false;
@@ -74,7 +80,7 @@ class _GenerateNotificationScreenState
   Future<void> _loadEmployees() async {
     setState(() => _isLoadingEmployees = true);
     try {
-      final employees = await _employeeDataSource.getAllEmployees();
+      final employees = await widget.employeeDataSource.getAllEmployees();
       setState(() {
         _employees = employees;
         _isLoadingEmployees = false;
@@ -126,7 +132,7 @@ class _GenerateNotificationScreenState
       // POST /notifications
       // isGlobal = true → send to everyone, recipientIds not needed
       // isGlobal = false → send to selected employees via recipientIds
-      await _notificationDataSource.createNotification(
+      await widget.notificationDataSource.createNotification(
         title: _titleController.text.trim(),
         message: _messageController.text.trim(),
         type: _selectedType,

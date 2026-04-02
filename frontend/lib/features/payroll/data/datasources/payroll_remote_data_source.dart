@@ -12,7 +12,20 @@ import '../../../../core/network/dio_client.dart';
 /// GET /payroll/my-recent-payslips → List<PayslipResponse>
 /// GET /payroll/payslips/{id}     → PayslipResponse (single payslip by UUID)
 
-class PayrollRemoteDataSource {
+abstract class PayrollDataSource {
+  Future<Map<String, dynamic>> getMySalary();
+  Future<Map<String, dynamic>> getMyPayslips({
+    int? month,
+    int? year,
+    int page = 1,
+    int limit = 10,
+  });
+  Future<List<dynamic>> getMyRecentPayslips();
+  Future<Map<String, dynamic>> getPayslipById(String id);
+  Future<List<int>> downloadPayslip(String id);
+}
+
+class PayrollRemoteDataSource implements PayrollDataSource {
   final DioClient dioClient;
 
   PayrollRemoteDataSource({required this.dioClient});
@@ -22,6 +35,7 @@ class PayrollRemoteDataSource {
   /// GET /payroll/my-salary
   /// Returns a Map containing salary breakdown.
   /// Backend returns Map<String, Object> from PayrollService.getMySalary()
+  @override
   Future<Map<String, dynamic>> getMySalary() async {
     try {
       final response = await dioClient.dio.get(ApiConstants.mySalary);
@@ -36,6 +50,7 @@ class PayrollRemoteDataSource {
   /// GET /payroll/my-payslips?month=&year=&page=1&limit=10
   /// Returns PagedResponse<PayslipResponse>:
   /// { data: [...], total: N, page: N, limit: N, totalPages: N }
+  @override
   Future<Map<String, dynamic>> getMyPayslips({
     int? month,
     int? year,
@@ -63,6 +78,7 @@ class PayrollRemoteDataSource {
 
   /// GET /payroll/my-recent-payslips
   /// Returns List<PayslipResponse> — last 3 payslips, no pagination
+  @override
   Future<List<dynamic>> getMyRecentPayslips() async {
     try {
       final response = await dioClient.dio.get(ApiConstants.myRecentPayslips);
@@ -76,6 +92,7 @@ class PayrollRemoteDataSource {
 
   /// GET /payroll/payslips/{id}
   /// Returns single PayslipResponse by UUID
+  @override
   Future<Map<String, dynamic>> getPayslipById(String id) async {
     try {
       final response = await dioClient.dio.get(
@@ -91,6 +108,7 @@ class PayrollRemoteDataSource {
 
   /// GET /payroll/payslips/{id}/download
   /// Returns PDF as bytes
+  @override
   Future<List<int>> downloadPayslip(String id) async {
     try {
       final response = await dioClient.dio.get(

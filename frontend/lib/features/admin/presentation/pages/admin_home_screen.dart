@@ -20,16 +20,23 @@ import '../../../admin/data/datasources/admin_payroll_data_source.dart';
 ///   GET /letters/pending           → List<LetterRequestResponse>
 
 class AdminHomeScreen extends StatefulWidget {
-  const AdminHomeScreen({super.key});
+  AdminHomeScreen({
+    super.key,
+    LeaveDataSource? leaveDataSource,
+    AdminPayrollSource? payrollDataSource,
+  })  : leaveDataSource =
+            leaveDataSource ?? LeaveRemoteDataSource(dioClient: DioClient()),
+        payrollDataSource =
+            payrollDataSource ?? AdminPayrollDataSource(dioClient: DioClient());
+
+  final LeaveDataSource leaveDataSource;
+  final AdminPayrollSource payrollDataSource;
 
   @override
   State<AdminHomeScreen> createState() => _AdminHomeScreenState();
 }
 
 class _AdminHomeScreenState extends State<AdminHomeScreen> {
-  final _leaveDataSource = LeaveRemoteDataSource(dioClient: DioClient());
-  final _payrollDataSource = AdminPayrollDataSource(dioClient: DioClient());
-
   bool _isLoading = false;
   List<dynamic> _pendingLeaves = [];
   List<dynamic> _pendingLetters = [];
@@ -44,8 +51,8 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
     setState(() => _isLoading = true);
     try {
       final results = await Future.wait([
-        _leaveDataSource.getPendingLeaves(),
-        _payrollDataSource.getPendingLetterRequests(),
+        widget.leaveDataSource.getPendingLeaves(),
+        widget.payrollDataSource.getPendingLetterRequests(),
       ]);
       setState(() {
         _pendingLeaves = results[0];
