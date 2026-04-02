@@ -97,6 +97,18 @@ pipeline {
             }
         }
 
+        stage('Run Tests') {
+            steps {
+                dir('frontend') {
+                    bat 'flutter test'
+                }
+            }
+            post {
+                success { echo 'Flutter tests passed!' }
+                failure { echo 'Flutter tests FAILED!' }
+            }
+        }
+
         stage('Static Analysis') {
             steps {
                 script {
