@@ -1,18 +1,21 @@
 import 'package:employee_activity_app/features/attendance/presentation/pages/attendance_history_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/intl.dart';
 
 import '../../../../helpers/test_helpers.dart';
 
 void main() {
   testWidgets('renders attendance summary and history records', (tester) async {
+    final today = DateTime.now();
+    final todayIso = DateFormat('yyyy-MM-dd').format(today);
     final dataSource = FakeAttendanceDataSource(
       attendanceHistory: [
         {
-          'date': '2026-04-01',
+          'date': todayIso,
           'status': 'PRESENT',
-          'checkInTime': '2026-04-01T09:15:00',
-          'checkOutTime': '2026-04-01T18:00:00',
+          'checkInTime': '${todayIso}T09:15:00',
+          'checkOutTime': '${todayIso}T18:00:00',
         },
       ],
     );
