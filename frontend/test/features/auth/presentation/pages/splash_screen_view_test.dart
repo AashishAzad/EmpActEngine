@@ -1,3 +1,4 @@
+import 'package:employee_activity_app/features/auth/presentation/pages/app_splash_view.dart';
 import 'package:employee_activity_app/features/auth/presentation/pages/splash_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';

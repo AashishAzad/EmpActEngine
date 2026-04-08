@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/network/dio_client.dart';
+import '../../abstracts/leave_data_source.dart';
 
 /// Leave Remote Data Source
 ///
@@ -13,25 +14,6 @@ import '../../../../core/network/dio_client.dart';
 /// GET   /leaves/pending          → List<LeaveResponse> (plain list, Admin/Manager)
 /// PATCH /leaves/{id}/approve     → LeaveResponse (no body needed)
 /// PATCH /leaves/{id}/reject      → LeaveResponse (body: ActionLeaveRequest)
-
-abstract class LeaveDataSource {
-  Future<Map<String, dynamic>> applyLeave({
-    required String leaveType,
-    required String startDate,
-    required String endDate,
-    required String contactNumber,
-    required String contactEmail,
-    String? remarks,
-  });
-
-  Future<List<dynamic>> getMyLeaves();
-  Future<List<dynamic>> getPendingLeaves();
-  Future<void> approveLeave({required String leaveId});
-  Future<void> rejectLeave({
-    required String leaveId,
-    required String actionRemarks,
-  });
-}
 
 class LeaveRemoteDataSource implements LeaveDataSource {
   final DioClient dioClient;

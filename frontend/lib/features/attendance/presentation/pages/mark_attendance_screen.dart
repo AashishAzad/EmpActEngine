@@ -9,27 +9,10 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/permission_utils.dart';
 import '../../../../shared/widgets/custom_button.dart';
 import '../../../../shared/widgets/loading_indicator.dart';
+import '../../abstracts/attendance_data_source.dart';
+import '../../abstracts/attendance_local_service.dart';
 import '../../data/datasources/attendance_remote_data_source.dart';
-
-class LocationSnapshot {
-  const LocationSnapshot({
-    required this.latitude,
-    required this.longitude,
-    required this.accuracy,
-    required this.address,
-  });
-
-  final double latitude;
-  final double longitude;
-  final double accuracy;
-  final String address;
-}
-
-abstract class AttendanceLocationService {
-  Future<bool> hasPermission();
-  Future<bool> isServiceEnabled();
-  Future<LocationSnapshot> getCurrentLocation();
-}
+import '../../models/location_snapshot.dart';
 
 class DeviceAttendanceLocationService implements AttendanceLocationService {
   @override

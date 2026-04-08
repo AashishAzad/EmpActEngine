@@ -1,11 +1,11 @@
 import 'dart:async';
 
+import 'package:employee_activity_app/core/router/refresh_router_stream.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../features/attendance/presentation/pages/attendance_history_screen.dart';
 import '../../features/attendance/presentation/pages/mark_attendance_screen.dart';
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
-import '../../features/auth/presentation/bloc/auth_state.dart';
 import '../../features/leaves/presentation/pages/apply_leave_screen.dart';
 import '../../features/leaves/presentation/pages/leave_history_screen.dart';
 import '../../features/leaves/presentation/pages/pending_leaves_screen.dart';
@@ -14,6 +14,7 @@ import '../../features/notification/presentation/pages/notifications_screen.dart
 import '../../features/payroll/presentation/pages/my_salary_screen.dart';
 import '../../features/payroll/presentation/pages/payslips_screen.dart';
 import '../../features/profile/presentation/pages/settings_screen.dart';
+import '../../shared/screens/error_screen.dart';
 import '../utils/storage_helper.dart';
 import '../../features/auth/presentation/pages/splash_screen.dart';
 import '../../features/auth/presentation/pages/login_screen.dart';
@@ -274,34 +275,5 @@ class AppRouter {
 
     // No redirect needed
     return null;
-  }
-}
-
-class GoRouterRefreshStream extends ChangeNotifier {
-  late final StreamSubscription<AuthState> _subscription;
-
-  GoRouterRefreshStream(Stream<AuthState> stream) {
-    _subscription = stream.asBroadcastStream().listen((_) => notifyListeners());
-  }
-
-  @override
-  void dispose() {
-    _subscription.cancel();
-    super.dispose();
-  }
-}
-
-// ========== ERROR SCREEN ==========
-
-class ErrorScreen extends StatelessWidget {
-  const ErrorScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(
-        child: Text('404 - Page Not Found'),
-      ),
-    );
   }
 }

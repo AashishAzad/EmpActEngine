@@ -4,10 +4,10 @@ import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'core/utils/storage_helper.dart';
 import 'core/network/dio_client.dart';
-import 'features/auth/data/datasources/auth_remote_data_source.dart';
+import 'features/auth/data/datasources/auth_remote_data_source_impl.dart';
 import 'features/auth/data/repositories/auth_repository_impl.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
-import 'features/auth/presentation/pages/splash_screen.dart';
+import 'features/auth/presentation/pages/app_splash_view.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();

@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/network/dio_client.dart';
+import '../../abstracts/payroll_data_source.dart';
 
 /// Payroll Remote Data Source
 ///
@@ -11,19 +12,6 @@ import '../../../../core/network/dio_client.dart';
 /// GET /payroll/my-payslips       → PagedResponse<PayslipResponse> { data, total, page, limit }
 /// GET /payroll/my-recent-payslips → List<PayslipResponse>
 /// GET /payroll/payslips/{id}     → PayslipResponse (single payslip by UUID)
-
-abstract class PayrollDataSource {
-  Future<Map<String, dynamic>> getMySalary();
-  Future<Map<String, dynamic>> getMyPayslips({
-    int? month,
-    int? year,
-    int page = 1,
-    int limit = 10,
-  });
-  Future<List<dynamic>> getMyRecentPayslips();
-  Future<Map<String, dynamic>> getPayslipById(String id);
-  Future<List<int>> downloadPayslip(String id);
-}
 
 class PayrollRemoteDataSource implements PayrollDataSource {
   final DioClient dioClient;

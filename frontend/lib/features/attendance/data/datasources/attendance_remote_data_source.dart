@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/network/dio_client.dart';
+import '../../abstracts/attendance_data_source.dart';
 
 /// Attendance Remote Data Source
 ///
@@ -13,31 +14,6 @@ import '../../../../core/network/dio_client.dart';
 /// GET  /attendance/my-attendance?month=&year=  → List<AttendanceResponse>
 /// GET  /attendance/summary?month=&year=        → AttendanceSummaryResponse
 /// POST /attendance/manual-request              → ManualAttendanceRequestResponse (201)
-
-abstract class AttendanceDataSource {
-  Future<Map<String, dynamic>> markAttendance({
-    required double latitude,
-    required double longitude,
-    required String address,
-  });
-
-  Future<Map<String, dynamic>> getTodayAttendance();
-
-  Future<List<dynamic>> getAttendanceHistory({
-    int? month,
-    int? year,
-  });
-
-  Future<Map<String, dynamic>> getAttendanceSummary({
-    required int month,
-    required int year,
-  });
-
-  Future<Map<String, dynamic>> requestManualAttendance({
-    required DateTime date,
-    required String reason,
-  });
-}
 
 class AttendanceRemoteDataSource implements AttendanceDataSource {
   final DioClient dioClient;

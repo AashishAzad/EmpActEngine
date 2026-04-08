@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/network/dio_client.dart';
+import '../../abstracts/notification_data_source.dart';
 
 /// Notification Remote Data Source
 ///
@@ -14,18 +15,6 @@ import '../../../../core/network/dio_client.dart';
 ///
 /// NOTE: There is NO markAllAsRead endpoint in the backend.
 /// That feature has been removed from the data source.
-
-abstract class NotificationDataSource {
-  Future<List<dynamic>> getNotifications({
-    bool unreadOnly = false,
-    bool includeExpired = false,
-    String? type,
-  });
-
-  Future<int> getUnreadCount();
-  Future<Map<String, dynamic>> markAsRead(String id);
-  Future<void> deleteNotification(String id);
-}
 
 class NotificationRemoteDataSource implements NotificationDataSource {
   final DioClient dioClient;

@@ -6,6 +6,7 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../../../shared/widgets/loading_indicator.dart';
 import '../../../admin/data/datasources/admin_employee_data_source.dart';
+import '../../abstracts/admin_employee_source.dart';
 
 /// Company Screen
 ///

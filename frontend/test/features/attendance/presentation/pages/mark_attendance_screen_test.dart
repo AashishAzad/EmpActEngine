@@ -1,3 +1,4 @@
+import 'package:employee_activity_app/features/attendance/models/location_snapshot.dart';
 import 'package:employee_activity_app/features/attendance/presentation/pages/mark_attendance_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';

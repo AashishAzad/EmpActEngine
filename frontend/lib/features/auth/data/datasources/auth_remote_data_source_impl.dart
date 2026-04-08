@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/network/dio_client.dart';
+import '../../abstracts/auth_remote_data_source.dart';
 import '../models/user_model.dart';
 
 /// Auth Remote Data Source
@@ -12,13 +13,6 @@ import '../models/user_model.dart';
 /// GET  /auth/profile  → EmployeeResponse (richer shape, same field names)
 /// POST /auth/refresh  → AuthResponse { accessToken, refreshToken, user: UserInfo }
 /// POST /auth/logout   → { message: "Logged out successfully" }
-
-abstract class AuthRemoteDataSource {
-  Future<LoginResponse> login(String employeeId, String password);
-  Future<UserModel> getProfile();
-  Future<void> logout();
-  Future<LoginResponse> refreshToken(String refreshToken);
-}
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   final DioClient dioClient;

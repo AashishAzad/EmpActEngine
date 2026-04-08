@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/network/dio_client.dart';
+import '../../abstract/letter_data_source.dart';
 
 /// Letter Remote Data Source
 ///
@@ -10,16 +11,6 @@ import '../../../../core/network/dio_client.dart';
 /// POST /letters/request           → LetterRequestResponse (201)
 /// GET  /letters/my-requests       → List<LetterRequestResponse> (plain list, no pagination)
 /// GET  /letters/{id}/download     → PDF bytes (streamed, auth required)
-
-abstract class LetterDataSource {
-  Future<Map<String, dynamic>> requestLetter({
-    required String letterType,
-    String? remarks,
-  });
-
-  Future<List<dynamic>> getMyLetterRequests();
-  Future<List<int>> downloadLetter(String id);
-}
 
 class LetterRemoteDataSource implements LetterDataSource {
   final DioClient dioClient;
